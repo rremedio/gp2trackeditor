@@ -55,7 +55,7 @@ protected:
   afx_msg void
     OnPaint();
   afx_msg void
-    OnTimer(UINT nIDEvent);
+    OnTimer(UINT_PTR nIDEvent);
   //}}AFX_MSG
   DECLARE_MESSAGE_MAP()
 };
