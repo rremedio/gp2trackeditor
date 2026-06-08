@@ -434,8 +434,8 @@ CTrackEditorDoc::OnFileSaveAs()
   if (result == IDOK) {
     CString filename = fdlg->GetFileName();
     CString path = fdlg->GetPathName();
-    mytrack->setFileName(filename);
-    mytrack->WriteTrackFile(filename);
+    mytrack->setFileName(path);
+    mytrack->WriteTrackFile(path);
     GetCurrentDirectory(1024, pwd);
     pApp->WriteProfileString(strSection, strStringItem, CString(pwd));
     pApp->AddToRecentFileList(path);
