@@ -1,0 +1,25 @@
+GPTrack.cpp
+  s_740125fb49b74d::t_5710caf2b09b16 73
+  s_740125fb49b74d::t_10b5c0ab7da12f 738-744
+  s_740125fb49b74d::t_cad387d41c8b15 785-791
+  s_740125fb49b74d::t_9697616fc6162e 804
+GPTrack.h
+  s_740125fb49b74d::t_a62f0794bf6603 10-13
+  s_740125fb49b74d::t_877b67c94ba37e 314
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "a0ac6417fe5c5aff5f0d0813a2b46699b1416e73",
+  "prompts": {},
+  "sessions": {
+    "s_740125fb49b74d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "372c5c91-8458-4930-a40c-0c08877321f5",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>"
+    }
+  }
+}
