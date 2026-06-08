@@ -1,6 +1,16 @@
+# Visual Studio / MSVC build artifacts
 /.vs
-/Release
 /Debug
 
 # Local build wrapper (copy build.bat.example and adjust paths)
 build.bat
+/Release
+/x64
+/Win32
+*.user
+*.aps
+*.suo
+*.sdf
+*.opensdf
+*.ncb
+ipch/
