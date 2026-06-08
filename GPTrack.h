@@ -7,6 +7,10 @@
 #include "DataValue.h"
 #include "Point3D.h"
 
+// Max .dat file size held in trackdata[]. 0x50000 = 320 KB, matching the GP2Lap
+// game-side ExtraTrackFileKB max (0x10000 + 256*1024). Was 65535 (the old ~64 KB cap).
+#define GP2_MAX_TRACKDATA 0x50000
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -307,7 +311,7 @@ public:
   void
     ShowHideAll(BOOL state);
 
-  unsigned char trackdata[65535];
+  unsigned char trackdata[GP2_MAX_TRACKDATA];
   int fileLength;
   int TrackDataOffset;
   int TrackPitLaneStart;
