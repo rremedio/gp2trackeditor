@@ -243,7 +243,7 @@ void CTrackSelection::UpdateLists()
         wsprintf(
           buffer, "[%d]%s, %s, %s, %d", i, (LPCTSTR)myTrack->getCircuitName(), (LPCTSTR)myTrack->getCircuitCountry(), (LPCTSTR)myTrack->getCircuitYears(), myTrack->getCircuitLaps());
         int idx = list->AddString(buffer);
-        list->SetItemData(idx, (DWORD)(LPCSTR)fileName);
+        list->SetItemData(idx, (DWORD_PTR)(LPCSTR)fileName);
       } else {
         AfxMessageBox("I have some problems reading files");
         delete myTrack;
@@ -287,7 +287,7 @@ void CTrackSelection::UpdateAllLists()
       if (myTrack->ReadTrackInfoFile(fileName)) {
         wsprintf(buffer, "%s, %s, %s, %d, (%s)", (LPCTSTR)myTrack->getCircuitName(), (LPCTSTR)myTrack->getCircuitCountry(), (LPCTSTR)myTrack->getCircuitYears(), myTrack->getCircuitLaps(), fileName);
         int fromidx = alllist->AddString(buffer);
-        alllist->SetItemData(fromidx, (DWORD)(LPCSTR)fileName);
+        alllist->SetItemData(fromidx, (DWORD_PTR)(LPCSTR)fileName);
       }
       // if (fileName) free(fileName);
       delete myTrack;
@@ -300,7 +300,7 @@ void CTrackSelection::UpdateAllLists()
           if (myTrack->isValid()) {
             wsprintf(buffer, "%s, %s, %s, %d, (%s)", (LPCTSTR)myTrack->getCircuitName(), (LPCTSTR)myTrack->getCircuitCountry(), (LPCSTR)myTrack->getCircuitYears(), myTrack->getCircuitLaps(), fileName);
             int fromidx = alllist->AddString(buffer);
-            alllist->SetItemData(fromidx, (DWORD)(LPCSTR)fileName);
+            alllist->SetItemData(fromidx, (DWORD_PTR)(LPCSTR)fileName);
           }
         }
         // if (fileName) free(fileName);
@@ -314,12 +314,12 @@ void CTrackSelection::UpdateAllLists()
     if ((hFile = FindFirstFile("*.set", &track_file)) != INVALID_HANDLE_VALUE) {
       int fromidx = alllist->AddString(track_file.cFileName);
       alllist->SetItemData(fromidx,
-        (DWORD)(LPCSTR)_strdup(track_file.cFileName));
+        (DWORD_PTR)(LPCSTR)_strdup(track_file.cFileName));
 
       while (FindNextFile(hFile, &track_file)) {
         int fromidx = alllist->AddString(track_file.cFileName);
         alllist->SetItemData(fromidx,
-          (DWORD)(LPCSTR)_strdup(track_file.cFileName));
+          (DWORD_PTR)(LPCSTR)_strdup(track_file.cFileName));
       }
     }
     FindClose(hFile);

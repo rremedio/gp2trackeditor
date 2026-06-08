@@ -275,6 +275,7 @@ ON_UPDATE_COMMAND_UI(ID_SHOW_SHOWVIEWDISTANCECOMMANDS,
 ON_COMMAND(ID_SHOW_SHOWVIEWDISTANCES, OnShowShowviewdistances)
 ON_UPDATE_COMMAND_UI(ID_SHOW_SHOWVIEWDISTANCES, OnUpdateShowShowviewdistances)
 ON_WM_CHAR()
+ON_WM_MOUSEWHEEL()
 //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -572,6 +573,22 @@ void TrackEditorScrollView::OnOut()
   display->ZoomOut();
   Resize(display->getScale());
   repaint();
+}
+
+BOOL TrackEditorScrollView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+{
+  if (nFlags & MK_CONTROL) {
+    if (zDelta > 0) {
+      display->ZoomIn();
+    } else {
+      display->ZoomOut();
+    }
+    Resize(display->getScale());
+    repaint();
+    return TRUE;
+  }
+
+  return CScrollView::OnMouseWheel(nFlags, zDelta, pt);
 }
 
 void TrackEditorScrollView::repaint()

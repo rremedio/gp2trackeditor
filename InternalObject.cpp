@@ -289,7 +289,7 @@ void InternalObject::LoadTreeTop(CTrackTree *tree, HTREEITEM node)
       SingleVariableObserver *itemData = new SingleVariableObserver(
         NULL, scaleData, "Scale Value", "Scale Values Used for Object");
       treeItemData->addElement(itemData);
-      tree->getTree()->SetItemData(node, (DWORD)itemData);
+      tree->getTree()->SetItemData(node, (DWORD_PTR)itemData);
     }
   }
 
@@ -334,21 +334,21 @@ void InternalObject::LoadTreeTop(CTrackTree *tree, HTREEITEM node)
       SingleVariableObserver *x_itemData = new SingleVariableObserver(
         NULL, Xdat, "X Data", "X Scale Index/Previous Point");
       treeItemData->addElement(x_itemData);
-      tree->getTree()->SetItemData(xnode, (DWORD)x_itemData);
+      tree->getTree()->SetItemData(xnode, (DWORD_PTR)x_itemData);
 
       buffer.Format("Y=%d", Y);
       HTREEITEM ynode = tree->insertInfoNode(xyzp, buffer, TO_ID(IDB_POINT));
       SingleVariableObserver *y_itemData = new SingleVariableObserver(
         NULL, Ydat, "Y Data", "Y Scale Index/Previous Point");
       treeItemData->addElement(y_itemData);
-      tree->getTree()->SetItemData(ynode, (DWORD)y_itemData);
+      tree->getTree()->SetItemData(ynode, (DWORD_PTR)y_itemData);
 
       buffer.Format("Z=%d", Z);
       HTREEITEM znode = tree->insertInfoNode(xyzp, buffer, TO_ID(IDB_POINT));
       SingleVariableObserver *z_itemData = new SingleVariableObserver(
         NULL, Zdat, "Z Data", "Z Scale Index/Previous Point");
       treeItemData->addElement(z_itemData);
-      tree->getTree()->SetItemData(znode, (DWORD)z_itemData);
+      tree->getTree()->SetItemData(znode, (DWORD_PTR)z_itemData);
     } else {
       int Xid = X;
       int Yid = Y;
@@ -408,21 +408,21 @@ void InternalObject::LoadTreeTop(CTrackTree *tree, HTREEITEM node)
       SingleVariableObserver *x_itemData = new SingleVariableObserver(
         NULL, Xdat, "X Data", "X Scale Index/Previous Point");
       treeItemData->addElement(x_itemData);
-      tree->getTree()->SetItemData(xnode, (DWORD)x_itemData);
+      tree->getTree()->SetItemData(xnode, (DWORD_PTR)x_itemData);
 
       buffer.Format("Y=%d uses scale s[%d]", Y, yyid);
       HTREEITEM ynode = tree->insertInfoNode(xyzp, buffer, TO_ID(IDB_POINT));
       SingleVariableObserver *y_itemData = new SingleVariableObserver(
         NULL, Ydat, "Y Data", "Y Scale Index/Previous Point");
       treeItemData->addElement(y_itemData);
-      tree->getTree()->SetItemData(ynode, (DWORD)y_itemData);
+      tree->getTree()->SetItemData(ynode, (DWORD_PTR)y_itemData);
 
       buffer.Format("Z=%d", Z);
       HTREEITEM znode = tree->insertInfoNode(xyzp, buffer, TO_ID(IDB_POINT));
       SingleVariableObserver *z_itemData = new SingleVariableObserver(
         NULL, Zdat, "Z Data", "Z Scale Index/Previous Point");
       treeItemData->addElement(z_itemData);
-      tree->getTree()->SetItemData(znode, (DWORD)z_itemData);
+      tree->getTree()->SetItemData(znode, (DWORD_PTR)z_itemData);
     }
 
     // Point3D *ptB = new Point3D(ptA);
@@ -461,7 +461,7 @@ void InternalObject::LoadTreeTop(CTrackTree *tree, HTREEITEM node)
     SingleVertexObserver *itemData = new SingleVertexObserver(
       NULL, PtPt, "From/To Vertex", "(From + (256*To)) Index for Point");
     treeItemData->addElement(itemData);
-    tree->getTree()->SetItemData(vp, (DWORD)itemData);
+    tree->getTree()->SetItemData(vp, (DWORD_PTR)itemData);
   }
 
   ///////////////////////////////////////////////////////
@@ -867,7 +867,7 @@ void InternalObject::LoadTreeTop(CTrackTree *tree, HTREEITEM node)
       SingleVariableObserver *itemData = new SingleVariableObserver(
         NULL, textureObj, "Texture Cmd Argument", "Possible Texture Id");
       treeItemData->addElement(itemData);
-      tree->getTree()->SetItemData(textureNode, (DWORD)itemData);
+      tree->getTree()->SetItemData(textureNode, (DWORD_PTR)itemData);
 
       buffer.Format("Rotation?=%d", cmd);
       HTREEITEM textureRot =
@@ -875,7 +875,7 @@ void InternalObject::LoadTreeTop(CTrackTree *tree, HTREEITEM node)
       SingleVariableObserver *itemDataRot = new SingleVariableObserver(
         NULL, rotObj, "Texture Rotation", "Possible Texture Rotation");
       treeItemData->addElement(itemDataRot);
-      tree->getTree()->SetItemData(textureRot, (DWORD)itemDataRot);
+      tree->getTree()->SetItemData(textureRot, (DWORD_PTR)itemDataRot);
       //
       if (unk2 != -99) {
         buffer.Format("Horizontal Resolution (/256)=%d (%d times)", unk2, unk2 / 256);
@@ -884,7 +884,7 @@ void InternalObject::LoadTreeTop(CTrackTree *tree, HTREEITEM node)
         SingleVariableObserver *itemData = new SingleVariableObserver(
           NULL, unk2Obj, "Texture Cmd Argument", "Possible Repeat Number");
         treeItemData->addElement(itemData);
-        tree->getTree()->SetItemData(textureNode2, (DWORD)itemData);
+        tree->getTree()->SetItemData(textureNode2, (DWORD_PTR)itemData);
       }
       //
       if (unk3 != -99) {
@@ -894,7 +894,7 @@ void InternalObject::LoadTreeTop(CTrackTree *tree, HTREEITEM node)
         SingleVariableObserver *itemData = new SingleVariableObserver(
           NULL, unk3Obj, "Texture Cmd Argument", "Possible Repeat Number");
         treeItemData->addElement(itemData);
-        tree->getTree()->SetItemData(textureNode2, (DWORD)itemData);
+        tree->getTree()->SetItemData(textureNode2, (DWORD_PTR)itemData);
       }
       //
       if (unk4 != -99) {
@@ -904,7 +904,7 @@ void InternalObject::LoadTreeTop(CTrackTree *tree, HTREEITEM node)
         SingleVariableObserver *itemData = new SingleVariableObserver(
           NULL, unk4Obj, "Texture Cmd Argument", "Possible Repeat Number");
         treeItemData->addElement(itemData);
-        tree->getTree()->SetItemData(textureNode2, (DWORD)itemData);
+        tree->getTree()->SetItemData(textureNode2, (DWORD_PTR)itemData);
       }
       if (unk5 != -99) {
         buffer.Format("Unk5?=%d", unk5);
@@ -913,7 +913,7 @@ void InternalObject::LoadTreeTop(CTrackTree *tree, HTREEITEM node)
         SingleVariableObserver *itemData = new SingleVariableObserver(
           NULL, unk5Obj, "Texture Cmd Argument", "Possible Repeat Number");
         treeItemData->addElement(itemData);
-        tree->getTree()->SetItemData(textureNode2, (DWORD)itemData);
+        tree->getTree()->SetItemData(textureNode2, (DWORD_PTR)itemData);
       }
       if (unk6 != -99) {
         buffer.Format("Unk6?=%d", unk6);
@@ -922,7 +922,7 @@ void InternalObject::LoadTreeTop(CTrackTree *tree, HTREEITEM node)
         SingleVariableObserver *itemData = new SingleVariableObserver(
           NULL, unk6Obj, "Texture Cmd Argument", "Possible Repeat Number");
         treeItemData->addElement(itemData);
-        tree->getTree()->SetItemData(textureNode2, (DWORD)itemData);
+        tree->getTree()->SetItemData(textureNode2, (DWORD_PTR)itemData);
       }
 
       for (int i = 0; i < vertexObjs.size(); i++) {
@@ -933,7 +933,7 @@ void InternalObject::LoadTreeTop(CTrackTree *tree, HTREEITEM node)
         SingleVariableObserver *itemData = new SingleVariableObserver(
           NULL, vertexObj, "Vertex", "Vertex Number for polygon");
         treeItemData->addElement(itemData);
-        tree->getTree()->SetItemData(textureNode2, (DWORD)itemData);
+        tree->getTree()->SetItemData(textureNode2, (DWORD_PTR)itemData);
       }
     }
   }
@@ -959,7 +959,7 @@ void InternalObject::LoadTreeTop(CTrackTree *tree, HTREEITEM node)
       SingleVariableObserver *itemData = new SingleVariableObserver(
         NULL, scaleData, "Unk Value", "Unk Values Used for Object");
       treeItemData->addElement(itemData);
-      tree->getTree()->SetItemData(node, (DWORD)itemData);
+      tree->getTree()->SetItemData(node, (DWORD_PTR)itemData);
     }
   }
 
@@ -1040,7 +1040,7 @@ void InternalObject::LoadTree(CTrackTree *tree, HTREEITEM node)
     CString buff;
     buff.Format("TexureId=%d Unk1=%d Cmd=%d Unk3=%d Unk4=%d", textureid, IOcmd->getNthArg(1), IOcmd->getNthArg(3), IOcmd->getNthArg(4), IOcmd->getNthArg(5));
     HTREEITEM texture = tree->insertInfoNode(SubTree, buff, TO_ID(IDB_JAMFILE));
-    tree->getTree()->SetItemData(texture, (DWORD)IOcmd);
+    tree->getTree()->SetItemData(texture, (DWORD_PTR)IOcmd);
   }
 }
 

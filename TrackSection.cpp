@@ -2132,10 +2132,10 @@ void TrackSection::LoadPropertyTable(CTrackPropertySheet *table)
   wsprintf(buffer, "%d", getLength());
   DataChangeObserver *lengthobserver = new DataChangeObserver(
     getTrack(), &length, t_INT, "Length", "Length of Section");
-  table->InsertTableString(0, 0, (LPSTR) "Length", (DWORD)NULL);
-  table->InsertTableString(0, 1, (LPSTR)buffer, (DWORD)NULL);
-  table->InsertTableString(0, 2, (LPSTR) "Length of the track section", (DWORD)NULL);
-  table->m_TrackProperty.SetItemData(0, (DWORD)lengthobserver);
+  table->InsertTableString(0, 0, (LPSTR) "Length", 0);
+  table->InsertTableString(0, 1, (LPSTR)buffer, 0);
+  table->InsertTableString(0, 2, (LPSTR) "Length of the track section", 0);
+  table->m_TrackProperty.SetItemData(0, (DWORD_PTR)lengthobserver);
 
   sprintf(buffer, "%f", getAngle());
   DataChangeObserver *angleobserver = new DataChangeObserver(
@@ -2144,7 +2144,7 @@ void TrackSection::LoadPropertyTable(CTrackPropertySheet *table)
   table->InsertTableString(1, 1, (LPSTR)buffer, NULL);
   table->InsertTableString(
     1, 2, (LPSTR) "Angle of the track section -ve=Left +ve=Right", NULL);
-  table->m_TrackProperty.SetItemData(1, (DWORD)angleobserver);
+  table->m_TrackProperty.SetItemData(1, (DWORD_PTR)angleobserver);
 
   sprintf(buffer, "%d", getHeight());
   DataChangeObserver *heightobserver = new DataChangeObserver(
@@ -2153,7 +2153,7 @@ void TrackSection::LoadPropertyTable(CTrackPropertySheet *table)
   table->InsertTableString(2, 1, (LPSTR)buffer, NULL);
   table->InsertTableString(
     2, 2, (LPSTR) "Change in Height over the track section", NULL);
-  table->m_TrackProperty.SetItemData(2, (DWORD)heightobserver);
+  table->m_TrackProperty.SetItemData(2, (DWORD_PTR)heightobserver);
 
   wsprintf(buffer, "%d", getRightToBank());
   DataChangeObserver *brobserver =
@@ -2162,7 +2162,7 @@ void TrackSection::LoadPropertyTable(CTrackPropertySheet *table)
   table->InsertTableString(3, 1, (LPSTR)buffer, NULL);
   table->InsertTableString(
     3, 2, (LPSTR) "Distance Between the edit of the track and the Wall (Right)", NULL);
-  table->m_TrackProperty.SetItemData(3, (DWORD)brobserver);
+  table->m_TrackProperty.SetItemData(3, (DWORD_PTR)brobserver);
 
   wsprintf(buffer, "%d", getLeftToBank());
   DataChangeObserver *blobserver =
@@ -2171,7 +2171,7 @@ void TrackSection::LoadPropertyTable(CTrackPropertySheet *table)
   table->InsertTableString(4, 1, (LPSTR)buffer, NULL);
   table->InsertTableString(
     4, 2, (LPSTR) "Distance Between the edit of the track and the Wall (Left)", NULL);
-  table->m_TrackProperty.SetItemData(4, (DWORD)blobserver);
+  table->m_TrackProperty.SetItemData(4, (DWORD_PTR)blobserver);
 }
 
 void TrackSection::AddGravelTrapLeft()
@@ -2567,7 +2567,7 @@ TrackSection::LoadTree(CTrackTree *mainTree, HTREEITEM HGP2Track, int index, BOO
 
   HTREEITEM HGP2TrackSection =
     mainTree->insertInfoNode(HGP2Track, trackStrBuffer, TO_ID(id));
-  mainTree->getTree()->SetItemData(HGP2TrackSection, (DWORD)this);
+  mainTree->getTree()->SetItemData(HGP2TrackSection, (DWORD_PTR)this);
   setTreeNode(HGP2TrackSection);
 
   Vector *trackSectionCmds = getCommands();
@@ -2658,7 +2658,7 @@ void TrackSection::Expand(CTrackTree *mainTree, HTREEITEM HGP2TrackSection)
         } else {
           cmdnode = mainTree->insertInfoNode(HGP2TrackSection, trackStrBuffer, TO_ID(cmd->getCmdIcon()));
         }
-        mainTree->getTree()->SetItemData(cmdnode, (DWORD)cmd);
+        mainTree->getTree()->SetItemData(cmdnode, (DWORD_PTR)cmd);
         cmd->setTreeNode(cmdnode);
       }
     }

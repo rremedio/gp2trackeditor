@@ -271,15 +271,12 @@ target_compile_options(TrackEditor PRIVATE
     /W3           # Warning level 3
     /wd4244       # Conversion from larger to smaller type (e.g. INT_PTR to int)
     /wd4267       # Conversion from size_t to smaller type
-    /wd4302       # Truncation from pointer to smaller type
-    /wd4311       # Pointer truncation (e.g. pointer to DWORD)
     /wd4101       # Unreferenced local variable
     /wd4552       # Result of expression not used
     /wd4789       # Buffer overrun warning in legacy code
     /wd5208       # Unnamed class in typedef
     /wd4778       # Unterminated format string
     /wd4474       # Too many arguments for format string
-    /wd4312       # Conversion from smaller type to pointer
 )
 
 # /MP (multi-processor compilation) benefits Visual Studio only;

@@ -53,7 +53,7 @@ void CHyperLinkButton::OnLButtonUp(UINT nFlags, CPoint point)
   GetWindowText(str);
   HINSTANCE h = ShellExecute(NULL, (LPCTSTR) "open", (LPCSTR)str, NULL, NULL, SW_SHOWNORMAL);
 
-  if ((UINT)h > 32) {
+  if ((UINT_PTR)h > 32) {
     // visited
   } else {
     MessageBeep(0);// unable to execute file!

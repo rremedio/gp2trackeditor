@@ -46,7 +46,7 @@ static char THIS_FILE[] = __FILE__;
 void LoadControlBarPosition(CFrameWnd* frame, CControlBar* cntrl, CString strStringItem);
 void SaveControlBarPosition(CFrameWnd* frame, CControlBar* cntrl, CString strStringItem);
 
-void HtmlHelpFunc(HWND caller, LPCSTR filename, UINT cmd, DWORD dwData);
+void HtmlHelpFunc(HWND caller, LPCTSTR filename, UINT cmd, DWORD_PTR dwData);
 
 /////////////////////////////////////////////////////////////////////////////
 // CTrackEditorApp
@@ -149,14 +149,14 @@ BOOL CTrackEditorApp::InitInstance()
   // Enable3dControlsStatic();  // Call this when linking to MFC statically
 #endif
 
-  SetRegistryKey("GP2TrackEditorProject\\TrackEditor");
+  SetRegistryKey(_T("GP2TrackEditorProject\\TrackEditor"));
 
   LoadStdProfileSettings(8);// Load standard INI file options (including MRU)
 
   // Register the application's document templates.  Document templates
   //  serve as the connection between documents, frame windows and views.
 
-  CString strSection = "Preferences";
+  CString strSection = _T("Preferences");
 
   PROFILE(showMainTree, TRUE)
   PROFILE(showTableTree, TRUE)
@@ -1042,9 +1042,9 @@ void CTrackEditorApp::OnStartHelp(BOOL reposition)
   CRect Wrect;
   CString helppath = "TrackEditor.chm";
 
-  char szModuleName[260];
+  TCHAR szModuleName[260];
   GetModuleFileName(GetModuleHandle(NULL), szModuleName, sizeof(szModuleName));
-  char* pos = strrchr(szModuleName, '\\');
+  TCHAR* pos = _tcsrchr(szModuleName, '\\');
   if (pos) {
     *pos = '\0';
     helppath = szModuleName;
@@ -1096,7 +1096,7 @@ void CTrackEditorApp::OnStartHelp(BOOL reposition)
 
   typeInfo.fUniCodeStrings = FALSE;
   typeInfo.pszType = TypeName;
-  typeInfo.pszCaption = "Track Editor Help File";
+  typeInfo.pszCaption = _T("Track Editor Help File");
 
   typeInfo.fsValidMembers = HHWIN_PARAM_PROPERTIES | HHWIN_PARAM_TABPOS | HHWIN_PARAM_SHOWSTATE | HHWIN_PARAM_TB_FLAGS;
 
@@ -1123,7 +1123,7 @@ void CTrackEditorApp::OnStartHelp(BOOL reposition)
   typeInfo.fsToolBarFlags |= HHWIN_BUTTON_INDEX;
   typeInfo.rcWindowPos = rect;
 
-  HtmlHelpFunc(AfxGetMainWnd()->m_hWnd, NULL, HH_SET_WIN_TYPE, (DWORD)(&typeInfo));
+  HtmlHelpFunc(AfxGetMainWnd()->m_hWnd, NULL, HH_SET_WIN_TYPE, (DWORD_PTR)(&typeInfo));
 
   tempType += TypeName;
 
@@ -1132,16 +1132,16 @@ void CTrackEditorApp::OnStartHelp(BOOL reposition)
 
 void CTrackEditorApp::OnHelpContentString(CString url)
 {
-  int useHelp = GetProfileInt("Settings", "UseHtmlHelp", 0);
+  int useHelp = GetProfileInt(_T("Settings"), _T("UseHtmlHelp"), 0);
 
   if (useHelp == 0) {
     int result = AfxMessageBox(
-      "Would you like to enable HtmlHelp in this application!", MB_YESNO);
+      _T("Would you like to enable HtmlHelp in this application!"), MB_YESNO);
     if (result == IDYES) {
-      WriteProfileInt("Settings", "UseHtmlHelp", 1);
+      WriteProfileInt(_T("Settings"), _T("UseHtmlHelp"), 1);
       useHelp = 1;
     } else {
-      WriteProfileInt("Settings", "UseHtmlHelp", 0);
+      WriteProfileInt(_T("Settings"), _T("UseHtmlHelp"), 0);
       useHelp = 0;
       return;
     }
@@ -1155,9 +1155,9 @@ void CTrackEditorApp::OnHelpContentString(CString url)
 
   CString helppath = "TrackEditor.chm";
 
-  char szModuleName[260];
+  TCHAR szModuleName[260];
   GetModuleFileName(GetModuleHandle(NULL), szModuleName, sizeof(szModuleName));
-  char* pos = strrchr(szModuleName, '\\');
+  TCHAR* pos = _tcsrchr(szModuleName, '\\');
   if (pos) {
     *pos = '\0';
     helppath = szModuleName;
@@ -1172,29 +1172,29 @@ void CTrackEditorApp::OnHelpContentString(CString url)
   prefix += m_chmUrl;
   prefix += "::/";
   prefix += url;
-  HtmlHelpFunc(AfxGetMainWnd()->m_hWnd, tempType, HH_DISPLAY_TOPIC, (DWORD)(LPCSTR)prefix);
+  HtmlHelpFunc(AfxGetMainWnd()->m_hWnd, tempType, HH_DISPLAY_TOPIC, (DWORD_PTR)(LPCTSTR)prefix);
 }
 
-typedef void (*HTMLHELPPROC)(HWND caller, LPCSTR filename, UINT cmd, DWORD dwData);
+typedef void (*HTMLHELPPROC)(HWND caller, LPCTSTR filename, UINT cmd, DWORD_PTR dwData);
 
-void HtmlHelpFunc(HWND caller, LPCSTR filename, UINT cmd, DWORD dwData)
+void HtmlHelpFunc(HWND caller, LPCTSTR filename, UINT cmd, DWORD_PTR dwData)
 {
-  static HINSTANCE hLib = LoadLibrary("hhctrl.ocx");
+  static HINSTANCE hLib = LoadLibrary(_T("hhctrl.ocx"));
 
   if (hLib != NULL) {
     FARPROC lpfnProc;
-    lpfnProc = GetProcAddress(hLib, "HtmlHelpA");
+    lpfnProc = GetProcAddress(hLib, "HtmlHelp");
 
     if (lpfnProc) {
       HTMLHELPPROC helpFn = (HTMLHELPPROC)lpfnProc;
       helpFn(caller, filename, cmd, dwData);
     } else {
-      AfxMessageBox("TrackEditor ERROR: Cannot Find HtmlHelp Functionality",
+      AfxMessageBox(_T("TrackEditor ERROR: Cannot Find HtmlHelp Functionality"),
         MB_OK);
     }
     // FreeLibrary(hLib);
   } else {
-    AfxMessageBox("Cannot Use HtmlHelp Functionality Can't find \"hhctl.ocx\"");
+    AfxMessageBox(_T("Cannot Use HtmlHelp Functionality Can't find \"hhctl.ocx\""));
   }
 }
 
@@ -1214,7 +1214,7 @@ void CTrackEditorApp::OnUpdateViewObjecttoolbar(CCmdUI* pCmdUI)
 
 void CTrackEditorApp::OnViewReadobjnames()
 {
-  CString strSection = "Preferences";
+  CString strSection = _T("Preferences");
   showReadObjNames = !showReadObjNames;
   WR_PROFILE(showReadObjNames)
 }
@@ -1493,7 +1493,7 @@ void CAboutDlg::OnForumSite()
   CString linkText = "http://www.mircx.com/cgi-bin/forum.cgi?forum=Tracked";
   HINSTANCE h = ShellExecute(NULL, (LPCTSTR) "open", (LPCSTR)linkText, NULL, NULL, SW_SHOWNORMAL);
 
-  if ((UINT)h > 32) {
+  if ((UINT_PTR)h > 32) {
     // visited
   } else {
     MessageBeep(0);// unable to execute file!
@@ -1517,7 +1517,7 @@ static void visitURL(LPCSTR linkText)
 {
   HINSTANCE h = ShellExecute(NULL, (LPCTSTR) "open", (LPCSTR)linkText, NULL, NULL, SW_SHOWNORMAL);
 
-  if ((UINT)h > 32) {
+  if ((UINT_PTR)h > 32) {
     // visited
   } else {
     MessageBeep(0);// unable to execute file!

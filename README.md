@@ -28,7 +28,7 @@ Adjust the `-G` generator string to match your Visual Studio version:
 
 ### Build with Ninja
 
-Use a **Developer Command Prompt** or **vcvarsall.bat** to set up the MSVC environment first:
+Use an **x86 Developer Command Prompt** or run `vcvarsall.bat x86` to set up the 32-bit MSVC environment first:
 
 ```bash
 mkdir build
@@ -48,4 +48,4 @@ cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 ```
 
-> **Note:** The project must be built as **Win32** (32-bit). MFC static linking and the MultiByte character set are configured automatically by CMake.
+> **Note:** MFC static linking and the MultiByte character set are configured automatically by CMake.
