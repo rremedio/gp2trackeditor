@@ -1,3 +1,13 @@
+# Visual Studio / MSVC build artifacts
 /.vs
-/Release
 /Debug
+/Release
+/x64
+/Win32
+*.user
+*.aps
+*.suo
+*.sdf
+*.opensdf
+*.ncb
+ipch/

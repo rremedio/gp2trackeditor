@@ -70,7 +70,7 @@ GPTrack::GPTrack(BOOL create)
 {
   GP2BackupNumber = 1;
   GP2MaxBackupNumber = 20;
-  memset(trackdata, 0, 65535);
+  memset(trackdata, 0, GP2_MAX_TRACKDATA);
   circuitName = CString("Unnamed Circuit");
   countryName = CString("Unknown Country");
   circuitYear = CString("1998");
@@ -735,6 +735,13 @@ void GPTrack::ReadTrackFile(CDocument *pDoc, const char *filename)
   count = GetLengthofFile(filename);
   setTrackName(filename);
 
+  if (count > GP2_MAX_TRACKDATA) {
+    AfxMessageBox("Track file too large for this editor", MB_OK);
+    valid = FALSE;
+    if (fp) fclose(fp);
+    return;
+  }
+
   if (trackdata != NULL && fp != NULL) {
     fread(trackdata, count, 1, fp);
   } else {
@@ -775,6 +782,13 @@ int GPTrack::ReadTrackInfoFile(const char *filename)
   count = GetLengthofFile(filename);
   setTrackName(filename);
 
+  if (count > GP2_MAX_TRACKDATA) {
+    AfxMessageBox("Track file too large for this editor", MB_OK);
+    valid = FALSE;
+    if (fp) fclose(fp);
+    return 0;
+  }
+
   if (trackdata != NULL && fp != NULL) {
     fread(trackdata, count, 1, fp);
   } else {
@@ -787,7 +801,7 @@ int GPTrack::ReadTrackInfoFile(const char *filename)
 
   fileLength = count;
 
-  if (fileLength < 65535) {
+  if (fileLength <= GP2_MAX_TRACKDATA) {
     ReadInfo(FALSE);
     valid = TRUE;
   } else {
