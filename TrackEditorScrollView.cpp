@@ -89,6 +89,8 @@ ON_COMMAND(ID_TRACK_TOOL, OnTrackTool)
 ON_COMMAND(ID_ZOOMTOOL, OnZoomtool)
 ON_UPDATE_COMMAND_UI(VIEW_CCLINE, OnUpdateCcline)
 ON_COMMAND(VIEW_CCLINE, OnCcline)
+ON_UPDATE_COMMAND_UI(ID_VIEW_COMPILED, OnUpdateViewCompiled)
+ON_COMMAND(ID_VIEW_COMPILED, OnViewCompiled)
 ON_UPDATE_COMMAND_UI(ID_VIEW_OBJ_BITMAPS, OnUpdateViewObjBitmaps)
 ON_UPDATE_COMMAND_UI(ID_ZOOMTOOL, OnUpdateZoomtool)
 ON_UPDATE_COMMAND_UI(ID_POINTER, OnUpdatePointer)
@@ -456,6 +458,10 @@ void TrackEditorScrollView::OnMyDraw(CDC* pDC)
         track->drawGrid(display);
         track->drawTrack(display, TRUE);
         track->drawCCLines(display);
+      } else if (track->showComputed) {
+        // bit-exact compiled-track + cc-line view (replaces the normal draws)
+        track->drawGrid(display);
+        track->drawComputed(display);
       } else {
         track->drawGrid(display);
         track->drawTrack(display);
@@ -1024,6 +1030,19 @@ void TrackEditorScrollView::OnCcline()
 {
   // TODO: Add your command handler code here
   OnDrivingLine();
+}
+
+void TrackEditorScrollView::OnUpdateViewCompiled(CCmdUI* pCmdUI)
+{
+  UPDATE_TRACK(showComputed);
+}
+
+void TrackEditorScrollView::OnViewCompiled()
+{
+  CTrackEditorDoc* pDoc = GetDocument();
+  GPTrack* mytrack = pDoc->getTrack();
+  mytrack->showComputed = !mytrack->showComputed;
+  repaint();
 }
 
 void TrackEditorScrollView::OnUpdateViewObjBitmaps(CCmdUI* pCmdUI)

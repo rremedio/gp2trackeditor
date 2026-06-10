@@ -145,6 +145,8 @@ public:
   void
     drawCCLine(Display *g);
   void
+    drawComputed(Display *g);   // bit-exact compiled track + cc-line (gp2cc)
+  void
     drawCameras(Display *g);
   void
     drawBlackFlags(Display *g);
@@ -243,6 +245,7 @@ public:
   BOOL showPitLane;
   BOOL showObjects;
   BOOL showCCLine;
+  BOOL showComputed;            // the bit-exact compiled track + cc-line view
   BOOL showHiddenAsGray;
   BOOL showTrackPie;
   BOOL showCameras;

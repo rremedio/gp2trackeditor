@@ -11,6 +11,7 @@
 #include "TrackSection.h"
 #include "TrackObjectDefinition.h"
 #include "CCLineSection.h"
+#include "gp2cc.h"   // bit-exact compiled track + cc-line
 #include "TrackCmd.h"
 #include "InternalObject.h"
 #include "JamFileEditor.h"
@@ -144,6 +145,7 @@ void GPTrack::Create()
   PROFILE(showPitLane, TRUE)
   PROFILE(showObjects, FALSE)
   PROFILE(showCCLine, TRUE)
+  PROFILE(showComputed, FALSE)
 
   PROFILE(showHiddenAsGray, TRUE)
   PROFILE(showTrackPie, FALSE)
@@ -412,6 +414,7 @@ GPTrack::~GPTrack()
   WR_PROFILE(showPitLane)
   WR_PROFILE(showObjects)
   WR_PROFILE(showCCLine)
+  WR_PROFILE(showComputed)
 
   WR_PROFILE(showHiddenAsGray)
   WR_PROFILE(showTrackPie)
@@ -4027,6 +4030,112 @@ void GPTrack::drawCCLine(Display *g)
       // g->setColor(0);
       g->drawText(txpos, typos, buffer);
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+//  drawComputed: the bit-exact "compiled track" view. Rebuilds the .dat image
+//  in trackdata[] from the current in-memory track (RecreateData), runs the
+//  gp2cc compiler + cc-line on it, and draws the road EDGES + the racing line
+//  in the editor's own coordinate frame. No pitlane/kerbs/objects.
+//
+//  Coordinate map: gp2cc positions are in 1/8-world-units (X8/Y8); the editor
+//  integrates 1 unit/segment while GP2 steps 128 world-units (=1024 X8) per
+//  segment, so scale = 1/1024, anchored at track section 0's start, same
+//  heading orientation. (If the shape comes out mirrored/wrong-scale, adjust
+//  S / the axis pairing here.)
+// ---------------------------------------------------------------------------
+void GPTrack::drawComputed(Display *g)
+{
+  if (TrackSections == NULL || TrackSections->size() == 0) return;
+
+  // rebuild trackdata[] (the .dat image) from the live track, then compile it
+  RecreateData();
+
+  static gp2cc_track gt;
+  static gp2cc_ccgeo cg;
+  static short bl[GP2CC_MAXSEG], a18[GP2CC_MAXSEG];
+
+  if (gp2cc_compile_geometry_buf(trackdata, 65535, &gt) != 0) return;
+  int n = gt.n;
+  if (n <= 1) return;
+
+  // cc-line on the compiled geometry (cx8 pairs with world Y=Y8, cy8 with X=X8)
+  cg.n = n;
+  for (int i = 0; i < n; i++) {
+    cg.segAngle[i] = gt.angle[i];
+    cg.cx8[i] = gt.Y8[i];
+    cg.cy8[i] = gt.X8[i];
+    cg.f14[i] = gt.f14[i];
+  }
+  static int cmdSeg[GP2CC_MAXSEG];   // first segment of each cc-command (=sector)
+  int numCmds = 0;
+  gp2cc_compute_ccline(&cg, trackdata, 65535, gt.ccoff, bl, a18, cmdSeg, &numCmds);
+
+  // editor frame: world units -> editor units = /128 (128 world-u/seg = 1 editor-u),
+  // anchored at section 0's start. Edges + cc-line = centre + perpendicular(heading)*
+  // (offset/8 world units), exactly like the validated preview (plot_ccline.py).
+  TrackSection *s0 = (TrackSection*)TrackSections->elementAt(0);
+  double ox = s0->getStartX(), oy = s0->getStartY();
+  double bwx = gt.X8[0] / 8.0, bwy = gt.Y8[0] / 8.0;
+  const double ES = 1.0 / 128.0;
+
+  static double lex[GP2CC_MAXSEG], ley[GP2CC_MAXSEG];   // left edge (editor coords)
+  static double rex[GP2CC_MAXSEG], rey[GP2CC_MAXSEG];   // right edge
+  static double ccx[GP2CC_MAXSEG], ccy[GP2CC_MAXSEG];   // cc-line
+  for (int i = 0; i < n; i++) {
+    double cosh = gp2cc_gv(gt.angle[i]) / 16384.0;             // cos(heading)
+    double sinh = gp2cc_gv(0x4000 - gt.angle[i]) / 16384.0;    // sin(heading)
+    double pvx = -sinh, pvy = cosh;        // unit perpendicular (worldX, worldY)
+    double px = gt.X8[i] / 8.0, py = gt.Y8[i] / 8.0;           // segment centre (world)
+    double wl = gt.widthL[i] / 8.0, wr = gt.widthR[i] / 8.0;   // half-widths (world)
+    double cc = bl[i] / 8.0;                                   // cc-line offset (world)
+    lex[i] = ox + (px + pvx * wl - bwx) * ES;  ley[i] = oy + (py + pvy * wl - bwy) * ES;
+    rex[i] = ox + (px - pvx * wr - bwx) * ES;  rey[i] = oy + (py - pvy * wr - bwy) * ES;
+    ccx[i] = ox + (px + pvx * cc - bwx) * ES;  ccy[i] = oy + (py + pvy * cc - bwy) * ES;
+  }
+
+  g->setColor(0);                     // road edges (dark)
+  for (int i = 0; i < n; i++) {
+    int j = (i + 1) % n;
+    g->drawLine(lex[i], ley[i], lex[j], ley[j]);
+    g->drawLine(rex[i], rey[i], rex[j], rey[j]);
+  }
+  g->setColor(RED_PEN);               // cc-line (racing line)
+  for (int i = 0; i < n; i++) {
+    int j = (i + 1) % n;
+    g->drawLine(ccx[i], ccy[i], ccx[j], ccy[j]);
+  }
+
+  // --- per-sector indicators + selected-sector highlight ---
+  // each CCLineSection maps 1:1 to a cc-command (cmdSeg[c] = its first segment).
+  int nSec = (CCLineSections != NULL) ? CCLineSections->size() : 0;
+  int mSec = (numCmds < nSec) ? numCmds : nSec;
+  for (int c = 0; c < mSec; c++) {
+    int s = cmdSeg[c];
+    if (s < 0 || s >= n) continue;
+    CCLineSection *sec = (CCLineSection *)CCLineSections->elementAt(c);
+    BOOL sel = (sec != NULL) && sec->isSelected();
+
+    // highlight the selected sector's cc-line segments (over-draw in colour 4)
+    if (sel) {
+      int len = (sec != NULL) ? (int)sec->getLength() : 0;
+      g->setColor(4);
+      for (int k = 0; k < len; k++) {
+        int i = (s + k) % n, j = (i + 1) % n;
+        g->drawLine(ccx[i], ccy[i], ccx[j], ccy[j]);
+      }
+    }
+
+    // small perpendicular tick on the cc-line where the sector starts. The editor
+    // transform is uniform scale + translate (no rotation), so the world-space unit
+    // perpendicular doubles as the editor-space direction; tlen is in editor units.
+    double cosh = gp2cc_gv(gt.angle[s]) / 16384.0;
+    double sinh = gp2cc_gv(0x4000 - gt.angle[s]) / 16384.0;
+    double tlen = 3.0;   // editor units
+    double tx = -sinh * tlen, ty = cosh * tlen;
+    g->setColor(sel ? 4 : BLUE_PEN);
+    g->drawLine(ccx[s] - tx, ccy[s] - ty, ccx[s] + tx, ccy[s] + ty);
   }
 }
 
