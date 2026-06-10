@@ -4137,6 +4137,52 @@ void GPTrack::drawComputed(Display *g)
     g->setColor(sel ? 4 : BLUE_PEN);
     g->drawLine(ccx[s] - tx, ccy[s] - ty, ccx[s] + tx, ccy[s] + ty);
   }
+
+  // --- track-section dividers + numbers (gated on showTrackNumbers) ---
+  // Each TrackSection serializes to ONE geometry command whose word N = getLength()
+  // (TrackSection::write writes lengthData as the command word) and gp2cc emits exactly
+  // N segments per command, so the running sum of getLength() over the sections (skipping
+  // the index==-99 ones that emit no command, as WriteTrack does) gives each section's
+  // first compiled segment — bit-exact with the road drawn above.
+  if (showTrackNumbers) {
+    int nsec = TrackSections->size();
+    CPen *divPen = new CPen(PS_SOLID, 1, RGB(110, 110, 110));   // section dividers (gray)
+    g->SelectObject(divPen);
+    int seg = 0;
+    for (int k = 0; k < nsec; k++) {
+      TrackSection *t = (TrackSection *)TrackSections->elementAt(k);
+      if (t->index == -99) continue;          // emits no geometry command (see WriteTrack)
+      int s = seg;                            // this section's first compiled segment
+      int len = (int)t->getLength();
+      seg += len;
+      if (s < 0 || s >= n) continue;
+
+      // divider: perpendicular line across the road at the section boundary
+      g->drawLine(lex[s], ley[s], rex[s], rey[s]);
+
+      // section number placed mid-section on the centre line (like the default view)
+      int mid = s + len / 2;
+      if (mid >= n) mid = s;
+      char buf[12];
+      wsprintf(buf, "%d", k);
+      g->drawText(ox + (gt.X8[mid] / 8.0 - bwx) * ES,
+                  oy + (gt.Y8[mid] / 8.0 - bwy) * ES, buf);
+    }
+    g->setColor(0);                            // deselect divPen before deleting it
+    delete divPen;
+  }
+
+  // --- start/finish line (gated on showFinishLine) ---
+  // Thick line across the road at segment 0 + checkered flag, mirroring
+  // TrackSection::drawStartingLine in the default view.
+  if (showFinishLine) {
+    CPen *sfPen = new CPen(PS_SOLID, 3, RGB(0, 0, 0));
+    g->SelectObject(sfPen);
+    g->drawLine(lex[0], ley[0], rex[0], rey[0]);
+    g->setColor(0);                            // deselect sfPen before deleting it
+    delete sfPen;
+    g->drawBitmap(IDB_CHECKED_FLAG, lex[0], ley[0] - 16);
+  }
 }
 
 void GPTrack::drawPitlane(Display *g)
