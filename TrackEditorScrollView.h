@@ -510,6 +510,8 @@ public:
     OnUpdateShowShowviewdistances(CCmdUI* pCmdUI);
   afx_msg void
     OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
+  afx_msg BOOL
+    OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
   //}}AFX_MSG
   DECLARE_MESSAGE_MAP()
 };

@@ -153,7 +153,7 @@ HTREEITEM CTrackTree::insertTrack(LPCSTR TrackName)
     SingleVariableObserver *data =                                 \
       new SingleVariableObserver(track, _var, _name, _desc);       \
     extraDataList->addElement(data);                               \
-    getTree()->SetItemData(node, (DWORD)data);                     \
+    getTree()->SetItemData(node, (DWORD_PTR)data);                     \
   }
 
 #define SINGLE_RGB_VAR(_parent, _buffer, _id, _var, _name, _desc)  \
@@ -162,7 +162,7 @@ HTREEITEM CTrackTree::insertTrack(LPCSTR TrackName)
     SingleColorObserver *data =                                    \
       new SingleColorObserver(track, _var, _name, _desc);          \
     extraDataList->addElement(data);                               \
-    getTree()->SetItemData(node, (DWORD)data);                     \
+    getTree()->SetItemData(node, (DWORD_PTR)data);                     \
   }
 
 char *
@@ -560,7 +560,7 @@ CTrackTree::insertTrack(GPTrack *track)
       // else if (directction < 0) id = IDB_CC_LEFT;
       HTREEITEM HGP2TrackSection =
         insertInfoNode(HGP2CCLine, buffer, TO_ID(id));
-      getTree()->SetItemData(HGP2TrackSection, (DWORD)t);
+      getTree()->SetItemData(HGP2TrackSection, (DWORD_PTR)t);
       t->setTreeNode(HGP2TrackSection);
     }
 
@@ -579,7 +579,7 @@ CTrackTree::insertTrack(GPTrack *track)
       int id = t->getDisplayIconType();
       HTREEITEM HGP2TrackSection =
         insertInfoNode(HGP2Objects, buffer, TO_ID(id));
-      getTree()->SetItemData(HGP2TrackSection, (DWORD)t);
+      getTree()->SetItemData(HGP2TrackSection, (DWORD_PTR)t);
       t->setTreeNode(HGP2TrackSection);
     }
 
@@ -595,7 +595,7 @@ CTrackTree::insertTrack(GPTrack *track)
       buffer.Format("[%d] id1=%d %s 0x%x size=%d Points=%d", i, i + 17, t->getName(), t->getOffset(), t->getSize(), t->getNumPoints());
       HTREEITEM HP2Obj =
         insertInfoNode(HGP2IntObjects, buffer, TO_ID(getOldDisplayIconType(track, i + 17, 0)));
-      getTree()->SetItemData(HP2Obj, (DWORD)t);
+      getTree()->SetItemData(HP2Obj, (DWORD_PTR)t);
       // t->LoadTreeTop(this,HP2Obj);
       t->setTreeNode(HP2Obj);
       t->SubTree =
@@ -622,7 +622,7 @@ CTrackTree::insertTrack(GPTrack *track)
         }
 
         HTREEITEM HGP2Camera = insertInfoNode(HGP2Cameras, buffer, TO_ID(id));
-        getTree()->SetItemData(HGP2Camera, (DWORD)t);
+        getTree()->SetItemData(HGP2Camera, (DWORD_PTR)t);
         t->setTreeNode(HGP2Camera);
       }
     }
@@ -630,68 +630,68 @@ CTrackTree::insertTrack(GPTrack *track)
     if (track->carsetup) {
       buffer.Format("CC Car Setup");
       HTREEITEM HGP2Setup = insertInfoNode(TrackRoot, buffer, TO_ID(IDB_FILE));
-      getTree()->SetItemData(HGP2Setup, (DWORD)track->carsetup);
+      getTree()->SetItemData(HGP2Setup, (DWORD_PTR)track->carsetup);
 
       buffer.Format("CC Front Wing=%d", track->carsetup->CCFrontWing);
       HTREEITEM HGP2FWingSetup =
         insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_FRONT_WING));
-      getTree()->SetItemData(HGP2FWingSetup, (DWORD)track->carsetup);
+      getTree()->SetItemData(HGP2FWingSetup, (DWORD_PTR)track->carsetup);
 
       buffer.Format("CC Rear Wing=%d", track->carsetup->CCRearWing);
       HTREEITEM HGP2RWingSetup =
         insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_REAR_WING));
-      getTree()->SetItemData(HGP2RWingSetup, (DWORD)track->carsetup);
+      getTree()->SetItemData(HGP2RWingSetup, (DWORD_PTR)track->carsetup);
 
       buffer.Format("CC 1st Gear=%d", track->carsetup->CCFirstGear);
       HTREEITEM H1Gear = insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_GEAR));
-      getTree()->SetItemData(H1Gear, (DWORD)track->carsetup);
+      getTree()->SetItemData(H1Gear, (DWORD_PTR)track->carsetup);
 
       buffer.Format("CC 2nd Gear=%d", track->carsetup->CCSecondGear);
       HTREEITEM H2Gear = insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_GEAR));
-      getTree()->SetItemData(H2Gear, (DWORD)track->carsetup);
+      getTree()->SetItemData(H2Gear, (DWORD_PTR)track->carsetup);
 
       buffer.Format("CC 3rd Gear=%d", track->carsetup->CCThirdGear);
       HTREEITEM H3Gear = insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_GEAR));
-      getTree()->SetItemData(H3Gear, (DWORD)track->carsetup);
+      getTree()->SetItemData(H3Gear, (DWORD_PTR)track->carsetup);
 
       buffer.Format("CC 4th Gear=%d", track->carsetup->CCFourthGear);
       HTREEITEM H4Gear = insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_GEAR));
-      getTree()->SetItemData(H4Gear, (DWORD)track->carsetup);
+      getTree()->SetItemData(H4Gear, (DWORD_PTR)track->carsetup);
 
       buffer.Format("CC 5th Gear=%d", track->carsetup->CCFifthGear);
       HTREEITEM H5Gear = insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_GEAR));
-      getTree()->SetItemData(H5Gear, (DWORD)track->carsetup);
+      getTree()->SetItemData(H5Gear, (DWORD_PTR)track->carsetup);
 
       buffer.Format("CC 6th Gear=%d", track->carsetup->CCSixthGear);
       HTREEITEM H6Gear = insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_GEAR));
-      getTree()->SetItemData(H6Gear, (DWORD)track->carsetup);
+      getTree()->SetItemData(H6Gear, (DWORD_PTR)track->carsetup);
 
       buffer.Format("Tyre Compound =%c val=%d",
         (char)((track->carsetup->CCTyreType) + 13),
         track->carsetup->CCTyreType);
       HTREEITEM HType = insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_TYRE));
-      getTree()->SetItemData(HType, (DWORD)track->carsetup);
+      getTree()->SetItemData(HType, (DWORD_PTR)track->carsetup);
 
       buffer.Format("Acceleration=%d", track->carsetup->CCAccel);
       HTREEITEM HAccel = insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_FILE));
-      getTree()->SetItemData(HAccel, (DWORD)track->carsetup);
+      getTree()->SetItemData(HAccel, (DWORD_PTR)track->carsetup);
 
       buffer.Format("Track Grip=%d", track->carsetup->CCTrackGrip);
       HTREEITEM HGrip = insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_FILE));
-      getTree()->SetItemData(HGrip, (DWORD)track->carsetup);
+      getTree()->SetItemData(HGrip, (DWORD_PTR)track->carsetup);
 
       buffer.Format("Brake Balance=%d", track->carsetup->CCBrakeBalance);
       HTREEITEM HBal = insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_FILE));
-      getTree()->SetItemData(HBal, (DWORD)track->carsetup);
+      getTree()->SetItemData(HBal, (DWORD_PTR)track->carsetup);
 
       buffer.Format("Air Resistance=%d", track->carsetup->CCAirResist);
       HTREEITEM HAir = insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_FILE));
-      getTree()->SetItemData(HAir, (DWORD)track->carsetup);
+      getTree()->SetItemData(HAir, (DWORD_PTR)track->carsetup);
 
       buffer.Format("CC Fuel Consumption? =%d",
         track->carsetup->CCFuelConsumption);
       HTREEITEM HFuel = insertInfoNode(HGP2Setup, buffer, TO_ID(IDB_FUEL));
-      getTree()->SetItemData(HFuel, (DWORD)track->carsetup);
+      getTree()->SetItemData(HFuel, (DWORD_PTR)track->carsetup);
     }
 
     // GP2JamFiles
@@ -710,7 +710,7 @@ CTrackTree::insertTrack(GPTrack *track)
           if (t->isDefault()) id = IDB_JAMFILE_INTERNAL;
           HTREEITEM HGP2Jam = insertInfoNode(HGP2JamFiles, buffer, TO_ID(id));
           t->setTreeNode(getTree(), HGP2Jam);
-          getTree()->SetItemData(HGP2Jam, (DWORD)t);
+          getTree()->SetItemData(HGP2Jam, (DWORD_PTR)t);
           t->LoadJamTree(this, HGP2Jam);
         }
       }
@@ -851,7 +851,7 @@ void CTrackTree::OnDblclkTracktree(NMHDR *pNMHDR, LRESULT *pResult)
   if (m_TrackTree) {
     HTREEITEM TreeNode = m_TrackTree.GetSelectedItem();
 
-    DWORD data = m_TrackTree.GetItemData(TreeNode);
+    DWORD_PTR data = m_TrackTree.GetItemData(TreeNode);
 
     Observer *dlg = (Observer *)data;
     if (dlg != NULL) {
@@ -1159,7 +1159,7 @@ void CTrackTree::OnItemexpandingTracktree(NMHDR *pNMHDR, LRESULT *pResult)
     if (TreeItem != NULL) {
       HTREEITEM TreeNode = TreeItem->hItem;
       if (TreeNode != 0) {
-        DWORD data = m_TrackTree.GetItemData(TreeNode);
+        DWORD_PTR data = m_TrackTree.GetItemData(TreeNode);
 
         Observer *dlg = (Observer *)data;
         if (dlg != NULL) {

@@ -169,7 +169,7 @@ void LoadJamListBox(GPTrack *track, CListCtrl *list)
       wsprintf(buffer, "%d", idx);
       int pos = InsertString(list, count, 0, buffer, TO_ID(IDB_JAMFILE));
       JAMExtraData *extraData = new JAMExtraData(jams, count, j, name, idx);
-      list->SetItemData(pos, (DWORD)extraData);
+      list->SetItemData(pos, (DWORD_PTR)extraData);
 
       wsprintf(buffer, "0x%x", idx);
       InsertString(list, pos, 1, buffer, TO_ID(IDB_JAMFILE));

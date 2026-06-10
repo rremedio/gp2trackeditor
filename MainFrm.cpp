@@ -289,7 +289,7 @@ void CMainFrame::OnInitMenu(CMenu* pMenu)
         pSubMenu->InsertMenu(0, MF_STRING | MF_BYPOSITION, CG_IDS_TIPOFTHEDAY, strTipMenu);
       }
       pMenu->AppendMenu(MF_STRING | MF_BYPOSITION | MF_ENABLED | MF_POPUP,
-        (UINT)pSubMenu->m_hMenu,
+        (UINT_PTR)pSubMenu->m_hMenu,
         strHelp);
       DrawMenuBar();
     } else {

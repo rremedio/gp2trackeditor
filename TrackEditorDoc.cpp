@@ -406,7 +406,6 @@ CTrackEditorDoc::OnFileSaveAs()
   CFileDialog *fdlg;
 
   char fileName[1024];
-  char pwd[1024];
 
   CString strSection = "Preferences";
   CString strStringItem = "GP2TrackSaveLocation";
@@ -434,11 +433,12 @@ CTrackEditorDoc::OnFileSaveAs()
   if (result == IDOK) {
     CString filename = fdlg->GetFileName();
     CString path = fdlg->GetPathName();
-    mytrack->setFileName(path);
+    mytrack->setFileName(filename);
     mytrack->WriteTrackFile(path);
-    GetCurrentDirectory(1024, pwd);
-    pApp->WriteProfileString(strSection, strStringItem, CString(pwd));
-    pApp->AddToRecentFileList(path);
+    SetPathName(path);
+    int lastSlash = path.ReverseFind('\\');
+    if (lastSlash >= 0)
+      pApp->WriteProfileString(strSection, strStringItem, path.Left(lastSlash));
   }
   delete fdlg;
 }
@@ -709,7 +709,15 @@ CTrackEditorDoc::OnFileSave()
     wsprintf(buff, "Saving track '%s' as %s\n", circuit, filename);
     int result = AfxMessageBox(buff, MB_YESNO);
 
-    if (result == IDYES) mytrack->WriteTrackFile(filename);
+    if (result == IDYES) {
+      CString path = GetPathName();
+      if (path.IsEmpty()) {
+        OnFileSaveAs();
+        return;
+      }
+      mytrack->WriteTrackFile(path);
+      SetPathName(path);
+    }
   }
 }
 
