@@ -11,7 +11,8 @@
 #include "TrackSection.h"
 #include "TrackObjectDefinition.h"
 #include "CCLineSection.h"
-#include "gp2cc.h"   // bit-exact compiled track + cc-line
+#include "gp2cc.h"     // bit-exact cc-line kernel (chaotic; kept as-is)
+#include "gp2geom.hpp" // semantic C++ track-geometry compiler (drop-in for gp2cc_compile_geometry_buf)
 #include "TrackCmd.h"
 #include "InternalObject.h"
 #include "JamFileEditor.h"
@@ -4056,7 +4057,7 @@ void GPTrack::drawComputed(Display *g)
   static gp2cc_ccgeo cg;
   static short bl[GP2CC_MAXSEG], a18[GP2CC_MAXSEG];
 
-  if (gp2cc_compile_geometry_buf(trackdata, 65535, &gt) != 0) return;
+  if (gp2geom::compileGeometry(trackdata, 65535, gt) != 0) return;
   int n = gt.n;
   if (n <= 1) return;
 

@@ -182,6 +182,14 @@
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="gp2geom.cpp">
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <!-- the cosine table is generated at compile time; raise MSVC's constexpr
+           step budget so the 4098-entry build fits. If it still struggles,
+           define GP2GEOM_EMBEDDED_COS to use the extracted table (bit-identical). -->
+      <AdditionalOptions>/constexpr:steps4000000 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="GPTrackDraw.cpp" />
     <ClCompile Include="HyperLinkButton.cpp" />
     <ClCompile Include="Info.cpp" />
@@ -288,6 +296,9 @@
     <ClInclude Include="GeneralDataEnry.h" />
     <ClInclude Include="GPTrack.h" />
     <ClInclude Include="gp2cc.h" />
+    <ClInclude Include="gp2geom.hpp" />
+    <ClInclude Include="gp2cos.hpp" />
+    <ClInclude Include="gp2cos_reference.hpp" />
     <ClInclude Include="htmlhelp.h" />
     <ClInclude Include="ImportDataElement.h" />
     <ClInclude Include="Info.h" />
