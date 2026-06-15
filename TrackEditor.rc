@@ -830,7 +830,7 @@ CAPTION "About TrackEditor"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     LTEXT           "TrackEditor Version",IDC_STATIC,147,7,68,8,SS_NOPREFIX
-    LTEXT           "Copyright ï¿½  Paul Hoad 1997-2020",IDC_STATIC,147,19,119,8
+    LTEXT           "Copyright ©  Paul Hoad 1997-2020",IDC_STATIC,147,19,119,8
     DEFPUSHBUTTON   "I Accept",IDOK,119,192,54,14,WS_GROUP
     LTEXT           "TrackEditor is a Shareware product. You are free to use TrackEditor on a trial basis only. If you like or intend to continue using the Track Editor in any way then you are required to register your copy with the author: (See README)",IDC_LEGAL1,7,59,303,27
     LTEXT           "You must NOT distribute this editor by any means other than via email or internet download without the authors prior agreement. You are not permitted to include this TrackEditor on any Media for distribution without the authors prior written consent.",IDC_LEGAL2,7,86,303,27
@@ -1395,7 +1395,7 @@ BEGIN
             VALUE "FileDescription", "TRACKEDITOR MFC Application"
             VALUE "FileVersion", "0, 0, 0, 0"
             VALUE "InternalName", "TRACKEDITOR"
-            VALUE "LegalCopyright", "Copyright ï¿½ Paul Hoad 1997-1998"
+            VALUE "LegalCopyright", "Copyright © Paul Hoad 1997-1998"
             VALUE "OriginalFilename", "TRACKEDITOR.EXE"
             VALUE "ProductName", "TRACKEDITOR Application"
             VALUE "ProductVersion", "000.000.000.000"
@@ -2346,7 +2346,7 @@ BEGIN
     LTEXT           "Info on Track Format",IDC_STATIC,14,115,67,8
     LTEXT           "Thank you to the Following....",IDC_STATIC,61,38,94,8
     GROUPBOX        "Credits",IDC_STATIC,7,7,212,212
-    LTEXT           "Rob Buis, Michele Merlino, Ponk, Marcel Borsboom, Trevor Kellaway,Andrzej Barganski,John Verheijen,""Swervin' Irvin'"",Mike Wallace, Michaï¿½l 'NRG' Hompus, Bob Culver.",IDC_STATIC,96,145,109,49,0,WS_EX_RIGHT
+    LTEXT           "Rob Buis, Michele Merlino, Ponk, Marcel Borsboom, Trevor Kellaway,Andrzej Barganski,John Verheijen,""Swervin' Irvin'"",Mike Wallace, Michaël 'NRG' Hompus, Bob Culver.",IDC_STATIC,96,145,109,49,0,WS_EX_RIGHT
     LTEXT           "Additional Thanks:",IDC_STATIC,13,145,60,8
     LTEXT           "Mirror Sites:",IDC_STATIC,14,71,50,8
     LTEXT           "All you Mirroring sites",IDC_STATIC,137,71,68,11
