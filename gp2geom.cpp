@@ -1,15 +1,8 @@
 #include "gp2geom.hpp"
 
-// Cosine source. Default: the build-time-verified formula table (gp2cos.hpp),
-// generated at compile time and static_assert'd against GP2's bytes. If a
-// toolchain struggles with the constexpr generation, define GP2GEOM_EMBEDDED_COS
-// to use the existing extracted table instead — the two are bit-identical
-// (verified on all 65536 angles), so the result is unchanged either way.
-#ifndef GP2GEOM_EMBEDDED_COS
-#  include "gp2cos.hpp"
-#else
-extern "C" const short gp2cc_COS[4200];
-#endif
+// Cosine source: the build-time-verified formula table (gp2cos.hpp), generated
+// at compile time and static_assert'd against GP2's bytes.
+#include "gp2cos.hpp"
 
 namespace gp2geom {
 namespace {
@@ -41,12 +34,7 @@ constexpr int wrap16(int v) { v &= 0xFFFF; return (v & 0x8000) ? v - 0x10000 : v
 
 // raw, grid-sampled cosine (amplitude 0x4000) of a binary-radian angle.
 inline int rawCos(int a) {
-#ifndef GP2GEOM_EMBEDDED_COS
     return scos(a);                                    // formula table (gp2cos.hpp)
-#else
-    a = wrap16(a); if (a < 0) a = -a;                  // existing extracted table
-    return gp2cc_COS[((a >> 2) & 0xFFFE) >> 1];
-#endif
 }
 inline int cosine(int angle) { return rawCos(angle); }
 inline int sine  (int angle) { return rawCos(kQuarterTurn - angle); }  // sin(x) = cos(90-x)
@@ -256,6 +244,18 @@ int compileGeometry(const std::uint8_t* dat, int len, gp2cc_track& out) {
     (void)len;
     TrackBuilder builder(dat, out);
     return builder.run();
+}
+
+// GP2's GetSinusVal (0x104B9): fold the sign, sample the 8-unit cosine grid, and
+// linearly interpolate over the low 3 bits. Bit-identical to the old C gp2cc_gv.
+int gv(int angle) {
+    int ax = wrap16(angle);
+    if (ax < 0) ax = (-ax) & 0xFFFF;
+    int frac = ax & 7;
+    int widx = ((ax >> 2) & 0xFFFE) >> 1;            // == ax >> 3
+    int base = kCosine[widx];
+    int d    = wrap16(kCosine[widx + 1] - base);
+    return wrap16(base + ((d * frac) >> 3));
 }
 
 } // namespace gp2geom

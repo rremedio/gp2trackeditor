@@ -11,9 +11,9 @@
 #include "TrackSection.h"
 #include "TrackObjectDefinition.h"
 #include "CCLineSection.h"
-#include "gp2cc.h"      // shared structs + the original C kernel (kept as fallback)
-#include "gp2geom.hpp"  // semantic C++ track-geometry compiler (drop-in for gp2cc_compile_geometry_buf)
-#include "gp2ccline.hpp" // C++ cc-line solver on the formula tables (drop-in for gp2cc_compute_ccline)
+#include "gp2cc.h"      // shared compiled-track data structs (gp2cc_track / gp2cc_ccgeo)
+#include "gp2geom.hpp"  // semantic C++ track-geometry compiler + the gv() cosine helper
+#include "gp2ccline.hpp" // C++ cc-line (racing-line) solver on the formula tables
 #include "TrackCmd.h"
 #include "InternalObject.h"
 #include "JamFileEditor.h"
@@ -4084,8 +4084,8 @@ bool GPTrack::buildCompiledOverlay()
   const double ES = 1.0 / 128.0;
 
   for (int i = 0; i < n; i++) {
-    double cosh = gp2cc_gv(ov.gt.angle[i]) / 16384.0;
-    double sinh = gp2cc_gv(0x4000 - ov.gt.angle[i]) / 16384.0;
+    double cosh = gp2geom::gv(ov.gt.angle[i]) / 16384.0;
+    double sinh = gp2geom::gv(0x4000 - ov.gt.angle[i]) / 16384.0;
     double pvx = -sinh, pvy = cosh;                   // unit perpendicular (worldX, worldY)
     double px = ov.gt.X8[i] / 8.0, py = ov.gt.Y8[i] / 8.0;
     double wl = ov.gt.widthL[i] / 8.0, wr = ov.gt.widthR[i] / 8.0;
@@ -4105,8 +4105,8 @@ bool GPTrack::buildCompiledOverlay()
     ov.numCmds = 0;
     gp2geom::computeCcLine(cg, trackdata, 65535, ov.gt.ccoff, ov.bl, ov.a18, ov.cmdSeg, &ov.numCmds);
     for (int i = 0; i < n; i++) {
-      double cosh = gp2cc_gv(ov.gt.angle[i]) / 16384.0;
-      double sinh = gp2cc_gv(0x4000 - ov.gt.angle[i]) / 16384.0;
+      double cosh = gp2geom::gv(ov.gt.angle[i]) / 16384.0;
+      double sinh = gp2geom::gv(0x4000 - ov.gt.angle[i]) / 16384.0;
       double pvx = -sinh, pvy = cosh;
       double px = ov.gt.X8[i] / 8.0, py = ov.gt.Y8[i] / 8.0;
       double cc = ov.bl[i] / 8.0;
@@ -4190,8 +4190,8 @@ void GPTrack::drawCompiledCcLine(Display *g)
       }
     }
 
-    double cosh = gp2cc_gv(ov.gt.angle[s]) / 16384.0;        // tick perpendicular
-    double sinh = gp2cc_gv(0x4000 - ov.gt.angle[s]) / 16384.0;
+    double cosh = gp2geom::gv(ov.gt.angle[s]) / 16384.0;        // tick perpendicular
+    double sinh = gp2geom::gv(0x4000 - ov.gt.angle[s]) / 16384.0;
     double tlen = 3.0;
     double tx = -sinh * tlen, ty = cosh * tlen;
     g->SelectObject(sel ? selPen : tickPen);

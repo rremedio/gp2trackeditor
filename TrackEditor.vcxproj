@@ -174,20 +174,11 @@
     <ClCompile Include="gp2exe.cpp" />
     <ClCompile Include="GPPitDraw.cpp" />
     <ClCompile Include="GPTrack.cpp" />
-    <ClCompile Include="gp2cc.c">
-      <LanguageStandard_C>stdc11</LanguageStandard_C>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="gp2cc_tables.c">
-      <LanguageStandard_C>stdc11</LanguageStandard_C>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="gp2geom.cpp">
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <!-- the cosine table is generated at compile time; raise MSVC's constexpr
-           step budget so the 4098-entry build fits. If it still struggles,
-           define GP2GEOM_EMBEDDED_COS to use the extracted table (bit-identical). -->
+           step budget so the 4098-entry build fits. -->
       <AdditionalOptions>/constexpr:steps4000000 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="gp2ccline.cpp">
