@@ -1751,6 +1751,8 @@ BEGIN
     VIEW_PITLANE            "Show Pitlane data\nShow Pit lane"
     VIEW_TRACK              "Show track data\nShow Track"
     VIEW_CCLINE             "Show Driving Line\nDriving Line"
+    ID_VIEW_COMPILED        "Toggle compiled track overlay\nCompiled Track Overlay"
+    ID_VIEW_COMPILED_CCLINE "Toggle compiled CC-line overlay\nCompiled CC-Line Overlay"
     VIEW_OBJECTS            "Show trackside objects\nShow Objects"
 END
 
