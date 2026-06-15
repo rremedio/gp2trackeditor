@@ -1,23 +1,27 @@
 #include "gp2ccline.hpp"
-#include "gp2cos.hpp"    // gp2geom::kCosine — the verified cosine table (COS)
-#include "gp2atan.hpp"   // gp2geom::kArctan — the verified atan table (ATAN1)
+#include "gp2cos.hpp"    // gp2geom::kCosine — the verified cosine table
+#include "gp2atan.hpp"   // gp2geom::kArctan — the verified arctangent table
 #include <cstring>
 
 namespace gp2geom {
 namespace {
 
-// Table aliases so the transcription below reads like the original kernel.
-inline int COS (int i)  { return kCosine[i]; }   // amplitude 0x4000 cosine table
-inline int ATAN(int i)  { return kArctan[i]; }    // atan table, 0x10000/turn
+// Short accessors for the two trig tables used throughout the math below.
+inline int COS (int i)  { return kCosine[i]; }   // cosine, amplitude 0x4000
+inline int ATAN(int i)  { return kArctan[i]; }    // arctangent, 0x10000 per turn
 
 #define ONE60  (((int64_t)1) << 60)
-constexpr int CBB0C = 20861;          // data const @0xCBB0C: segment-frame theta' tilt
+
+// Converts a segment's theta-prime tilt back into a binary-radian heading
+// offset: this is round(2^16 / pi), the inverse of the (pi/2)-scaled tilt that
+// the geometry pass stores in f14.
+constexpr int kInvPiQ16 = 20861;      // round(65536 / pi)
 
 inline int s16(int v)   { v &= 0xFFFF; return (v & 0x8000) ? v - 0x10000 : v; }
 inline int abs16(int v) { v = s16(v); return v < 0 ? -v : v; }
 inline int rdw(const std::uint8_t* d, int o) { return d[o] | (d[o + 1] << 8); }
 
-// GetSinusVal (0x104B9): interpolated cosine, amplitude 0x4000.
+// Interpolated cosine, amplitude 0x4000 (8-unit grid lookup + linear lerp).
 inline int gv(int ax) {
     ax = s16(ax);
     if (ax < 0) ax = (-ax) & 0xFFFF;
@@ -28,7 +32,9 @@ inline int gv(int ax) {
     return s16(base + ((d * frac) >> 3));
 }
 
-// sub_10240: 32-bit integer sqrt, FIXED 3-iteration 16-bit Newton (not floor).
+// 32-bit integer square root: a FIXED 3-iteration 16-bit Newton step. This is
+// deliberately NOT a true floor-sqrt — the fixed iteration count reproduces the
+// engine's exact (slightly-off) result, which the chaotic loop below depends on.
 std::uint32_t sqrt32(std::uint32_t V) {
     if (V == 0) return 0;
     int shift = 0;
@@ -44,7 +50,8 @@ std::uint32_t sqrt32(std::uint32_t V) {
     return (di >> shift) & 0xFFFF;
 }
 
-// sub_102F0: 64-bit integer sqrt, FIXED 5-iteration Newton.
+// 64-bit integer square root: a FIXED 5-iteration Newton step (same caveat as
+// sqrt32 — the iteration count is part of the result, not an approximation).
 std::uint32_t sqrt64(std::uint64_t V) {
     if (V == 0) return 0;
     if ((std::uint32_t)(V >> 32) == 0) return sqrt32((std::uint32_t)V);
@@ -59,7 +66,7 @@ std::uint32_t sqrt64(std::uint64_t V) {
     return est >> shift;
 }
 
-// sub_10502: cos(|angle|) in Q30 (amp 0x40000000) via the cos table + interp.
+// cos(|angle|) in Q30 (amplitude 0x40000000) from the cosine table + interpolation.
 std::int32_t cos30(int angle) {
     int a = abs16(angle);
     int widx = a >> 3, frac = a & 7;
@@ -68,7 +75,9 @@ std::int32_t cos30(int angle) {
     return ((std::int32_t)base << 16) + ((std::int32_t)(delta * frac) << 13);
 }
 
-// sub_7827D: Q30 cos/sin; larger component via sqrt(ONE60-other^2), smaller via table.
+// Q30 cosine and sine of an angle. To keep precision, the larger-magnitude of
+// the two is recovered from the smaller via sqrt(1 - x^2) (computed in Q60),
+// and the smaller-magnitude one is read straight from the table.
 void q30_cossin(int angle, std::int32_t* pcos, std::int32_t* psin) {
     int a = s16(angle);
     int coarse_sin = COS(abs16(s16(0x4000 - a)) >> 3);
@@ -87,7 +96,7 @@ void q30_cossin(int angle, std::int32_t* pcos, std::int32_t* psin) {
     *pcos = c30; *psin = s30;
 }
 
-// sub_10798: atan2(y,x) in 0x10000 units (full circle), 16-bit args.
+// atan2(y, x) in binary radians (0x10000 = a full turn), 16-bit arguments.
 int atan2u(int y, int x) {
     y = s16(y); x = s16(x);
     int dy = y < 0 ? -y : y;
@@ -107,7 +116,7 @@ int atan2u(int y, int x) {
     return s16(a);
 }
 
-// sub_78492: build the world arc-centre W for the first segment of a command.
+// Build the world arc-centre point W for the first segment of a command.
 void build_centre(const gp2cc_ccgeo* g, int idx, int P, int H,
                   std::int32_t arg2, int arg1mul4, std::int32_t* pWx, std::int32_t* pWy) {
     int seg = idx;
@@ -136,13 +145,14 @@ void build_centre(const gp2cc_ccgeo* g, int idx, int P, int H,
     *pWx = Wx; *pWy = Wy;
 }
 
-// sub_787E7: reproject world point W onto seg idx -> P (and H on curves).
+// Reproject the carried world point W onto segment `idx`, producing the lateral
+// offset P (and, on curved commands, the updated heading H).
 void reproject(const gp2cc_ccgeo* g, int idx, std::int32_t Wx, std::int32_t Wy,
                std::int32_t arg2, int* pP, int* pH) {
     int seg = idx;
     int f14 = (int)g->f14[seg];
     int ang = s16(g->segAngle[seg]);
-    int thetaP = s16(ang - (int)((((std::int32_t)(f14 >> 1) * CBB0C) << 1) >> 16));
+    int thetaP = s16(ang - (int)((((std::int32_t)(f14 >> 1) * kInvPiQ16) << 1) >> 16));
     std::int32_t relx = Wx - g->cx8[seg];
     std::int32_t rely = Wy - g->cy8[seg];
     std::int32_t c32, s32; q30_cossin(thetaP, &c32, &s32);
@@ -174,19 +184,20 @@ void reproject(const gp2cc_ccgeo* g, int idx, std::int32_t Wx, std::int32_t Wy,
     *pH = s16(at + thetaP);
 }
 
-// sub_78CEC: per-seg curvature-ramp nudge of W (slope!=0 commands).
+// Per-segment nudge of the world point W along a curvature ramp (commands whose
+// radius changes from segment to segment, i.e. a non-zero slope).
 void nudge(std::int32_t* pWx, std::int32_t* pWy, int H, std::int32_t arg2, std::int32_t slope) {
-    std::int32_t ebp = slope;
+    std::int32_t step = slope;
     int a;
-    if (arg2 < 0) { ebp = -ebp; a = s16(H - 0x4000); }
+    if (arg2 < 0) { step = -step; a = s16(H - 0x4000); }
     else            a = s16(H + 0x4000);
     int sinA = gv(s16(0x4000 - a));
     int cosA = gv(s16(a));
-    *pWx += (std::int32_t)(((std::int64_t)sinA * ebp) >> 14);
-    *pWy += (std::int32_t)(((std::int64_t)cosA * ebp) >> 14);
+    *pWx += (std::int32_t)(((std::int64_t)sinA * step) >> 14);
+    *pWy += (std::int32_t)(((std::int64_t)cosA * step) >> 14);
 }
 
-// GetSingleCmdArgs (0x78D4C): parse one cc command.
+// Parse one command from the cc-line command stream.
 struct cc_cmd {
     int end, word, N, a1, a2;
     std::int32_t arg2, slope;
@@ -218,8 +229,10 @@ void parse_cmd(const std::uint8_t* cc, int* po, cc_cmd* c) {
 
 } // anonymous namespace
 
-// UACalcBestLine (0x78EB2): walk the command stream; seed P/H; per segment store
-// bestLine/angle18 then reproject the carried world point; nudge on ramps.
+// Walk the cc-line command stream: seed the lateral offset P and heading H, then
+// for each segment store its racing-line offset (bestLine) and heading delta
+// (angle18) before reprojecting the carried world point onto the next segment,
+// nudging it along on curvature ramps.
 int computeCcLine(const gp2cc_ccgeo& gref, const std::uint8_t* cc, int cc_len, int cc_off,
                   std::int16_t* bestLine, std::int16_t* angle18,
                   int* cmdStartSeg, int* pNumCmds) {
@@ -230,7 +243,7 @@ int computeCcLine(const gp2cc_ccgeo& gref, const std::uint8_t* cc, int cc_len, i
     int H = s16(g->segAngle[0]);
     int P = 0;
     int w0 = rdw(cc, cc_off);
-    // seed P (segPosX_0A) is a SIGNED 16-bit word; sign-extend it.
+    // the initial lateral offset P is a SIGNED 16-bit word; sign-extend it.
     if (!(w0 & 0x800) && (w0 & 0x8000)) P = s16(rdw(cc, cc_off + 2));
     int o = cc_off;
     for (;;) {
