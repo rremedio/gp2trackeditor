@@ -11,7 +11,9 @@
 #include "TrackSection.h"
 #include "TrackObjectDefinition.h"
 #include "CCLineSection.h"
-#include "gp2cc.h"   // bit-exact compiled track + cc-line
+#include "gp2cc.h"      // shared compiled-track data structs (gp2cc_track / gp2cc_ccgeo)
+#include "gp2geom.hpp"  // semantic C++ track-geometry compiler + the gv() cosine helper
+#include "gp2ccline.hpp" // C++ cc-line (racing-line) solver on the formula tables
 #include "TrackCmd.h"
 #include "InternalObject.h"
 #include "JamFileEditor.h"
@@ -146,6 +148,7 @@ void GPTrack::Create()
   PROFILE(showObjects, FALSE)
   PROFILE(showCCLine, TRUE)
   PROFILE(showComputed, FALSE)
+  PROFILE(showComputedCCLine, FALSE)
 
   PROFILE(showHiddenAsGray, TRUE)
   PROFILE(showTrackPie, FALSE)
@@ -415,6 +418,7 @@ GPTrack::~GPTrack()
   WR_PROFILE(showObjects)
   WR_PROFILE(showCCLine)
   WR_PROFILE(showComputed)
+  WR_PROFILE(showComputedCCLine)
 
   WR_PROFILE(showHiddenAsGray)
   WR_PROFILE(showTrackPie)
@@ -4048,155 +4052,168 @@ void GPTrack::drawCCLine(Display *g)
 }
 
 // ---------------------------------------------------------------------------
-//  drawComputed: the bit-exact "compiled track" view. Rebuilds the .dat image
-//  in trackdata[] from the current in-memory track (RecreateData), runs the
-//  gp2cc compiler + cc-line on it, and draws the road EDGES + the racing line
-//  in the editor's own coordinate frame. No pitlane/kerbs/objects.
+//  Compiled overlays (bit-exact, gp2geom) drawn ON TOP of the normal view.
+//  buildCompiledOverlay() rebuilds the .dat from the live track (RecreateData),
+//  runs the gp2geom geometry compiler (and the cc-line only if that overlay is
+//  on), and projects every segment into the editor's frame. The two draw
+//  functions then render the compiled road (edges + section dividers, BLUE)
+//  and the compiled racing line (line + sector ticks, ORANGE; selected sector
+//  bright YELLOW), each toggled independently.
 //
-//  Coordinate map: gp2cc positions are in 1/8-world-units (X8/Y8); the editor
-//  integrates 1 unit/segment while GP2 steps 128 world-units (=1024 X8) per
-//  segment, so scale = 1/1024, anchored at track section 0's start, same
-//  heading orientation. (If the shape comes out mirrored/wrong-scale, adjust
-//  S / the axis pairing here.)
+//  Coordinate map: gp2geom positions are 1/8-world-units (X8/Y8); GP2 steps 128
+//  world-units (=1024 X8) per segment while the editor uses 1 unit/segment, so
+//  scale = 1/128, anchored at track section 0's start, same heading orientation.
+//  Each point = centre + perpendicular(heading) * (offset / 8 world units).
 // ---------------------------------------------------------------------------
-void GPTrack::drawComputed(Display *g)
+namespace {
+  struct CompiledOverlay {
+    bool valid;
+    bool hasCC;
+    int  n;
+    gp2cc_track gt;                                   // compiled geometry
+    short bl[GP2CC_MAXSEG], a18[GP2CC_MAXSEG];         // cc-line bestLine / angle18
+    int   cmdSeg[GP2CC_MAXSEG], numCmds;              // first segment of each cc-command
+    double lex[GP2CC_MAXSEG], ley[GP2CC_MAXSEG];      // left edge  (editor coords)
+    double rex[GP2CC_MAXSEG], rey[GP2CC_MAXSEG];      // right edge
+    double ccx[GP2CC_MAXSEG], ccy[GP2CC_MAXSEG];      // racing line
+  };
+  static CompiledOverlay ov;   // shared between buildCompiledOverlay + the draw fns
+}
+
+bool GPTrack::buildCompiledOverlay()
 {
-  if (TrackSections == NULL || TrackSections->size() == 0) return;
+  ov.valid = false; ov.hasCC = false;
+  if (TrackSections == NULL || TrackSections->size() == 0) return false;
 
-  // rebuild trackdata[] (the .dat image) from the live track, then compile it
-  RecreateData();
+  RecreateData();                                     // live track -> trackdata[]
+  if (gp2geom::compileGeometry(trackdata, GP2_MAX_TRACKDATA, ov.gt) != 0) return false;
+  int n = ov.gt.n;
+  if (n <= 1) return false;
+  ov.n = n;
 
-  static gp2cc_track gt;
-  static gp2cc_ccgeo cg;
-  static short bl[GP2CC_MAXSEG], a18[GP2CC_MAXSEG];
-
-  if (gp2cc_compile_geometry_buf(trackdata, 65535, &gt) != 0) return;
-  int n = gt.n;
-  if (n <= 1) return;
-
-  // cc-line on the compiled geometry (cx8 pairs with world Y=Y8, cy8 with X=X8)
-  cg.n = n;
-  for (int i = 0; i < n; i++) {
-    cg.segAngle[i] = gt.angle[i];
-    cg.cx8[i] = gt.Y8[i];
-    cg.cy8[i] = gt.X8[i];
-    cg.f14[i] = gt.f14[i];
-  }
-  static int cmdSeg[GP2CC_MAXSEG];   // first segment of each cc-command (=sector)
-  int numCmds = 0;
-  gp2cc_compute_ccline(&cg, trackdata, 65535, gt.ccoff, bl, a18, cmdSeg, &numCmds);
-
-  // editor frame: world units -> editor units = /128 (128 world-u/seg = 1 editor-u),
-  // anchored at section 0's start. Edges + cc-line = centre + perpendicular(heading)*
-  // (offset/8 world units), exactly like the validated preview (plot_ccline.py).
-  TrackSection *s0 = (TrackSection*)TrackSections->elementAt(0);
+  // editor frame: scale 1/128, anchored at section 0's start.
+  TrackSection *s0 = (TrackSection *)TrackSections->elementAt(0);
   double ox = s0->getStartX(), oy = s0->getStartY();
-  double bwx = gt.X8[0] / 8.0, bwy = gt.Y8[0] / 8.0;
+  double bwx = ov.gt.X8[0] / 8.0, bwy = ov.gt.Y8[0] / 8.0;
   const double ES = 1.0 / 128.0;
 
-  static double lex[GP2CC_MAXSEG], ley[GP2CC_MAXSEG];   // left edge (editor coords)
-  static double rex[GP2CC_MAXSEG], rey[GP2CC_MAXSEG];   // right edge
-  static double ccx[GP2CC_MAXSEG], ccy[GP2CC_MAXSEG];   // cc-line
   for (int i = 0; i < n; i++) {
-    double cosh = gp2cc_gv(gt.angle[i]) / 16384.0;             // cos(heading)
-    double sinh = gp2cc_gv(0x4000 - gt.angle[i]) / 16384.0;    // sin(heading)
-    double pvx = -sinh, pvy = cosh;        // unit perpendicular (worldX, worldY)
-    double px = gt.X8[i] / 8.0, py = gt.Y8[i] / 8.0;           // segment centre (world)
-    double wl = gt.widthL[i] / 8.0, wr = gt.widthR[i] / 8.0;   // half-widths (world)
-    double cc = bl[i] / 8.0;                                   // cc-line offset (world)
-    lex[i] = ox + (px + pvx * wl - bwx) * ES;  ley[i] = oy + (py + pvy * wl - bwy) * ES;
-    rex[i] = ox + (px - pvx * wr - bwx) * ES;  rey[i] = oy + (py - pvy * wr - bwy) * ES;
-    ccx[i] = ox + (px + pvx * cc - bwx) * ES;  ccy[i] = oy + (py + pvy * cc - bwy) * ES;
+    double cosh = gp2geom::gv(ov.gt.angle[i]) / 16384.0;
+    double sinh = gp2geom::gv(0x4000 - ov.gt.angle[i]) / 16384.0;
+    double pvx = -sinh, pvy = cosh;                   // unit perpendicular (worldX, worldY)
+    double px = ov.gt.X8[i] / 8.0, py = ov.gt.Y8[i] / 8.0;
+    double wl = ov.gt.widthL[i] / 8.0, wr = ov.gt.widthR[i] / 8.0;
+    ov.lex[i] = ox + (px + pvx * wl - bwx) * ES;  ov.ley[i] = oy + (py + pvy * wl - bwy) * ES;
+    ov.rex[i] = ox + (px - pvx * wr - bwx) * ES;  ov.rey[i] = oy + (py - pvy * wr - bwy) * ES;
   }
 
-  g->setColor(0);                     // road edges (dark)
-  for (int i = 0; i < n; i++) {
-    int j = (i + 1) % n;
-    g->drawLine(lex[i], ley[i], lex[j], ley[j]);
-    g->drawLine(rex[i], rey[i], rex[j], rey[j]);
-  }
-  g->setColor(RED_PEN);               // cc-line (racing line)
-  for (int i = 0; i < n; i++) {
-    int j = (i + 1) % n;
-    g->drawLine(ccx[i], ccy[i], ccx[j], ccy[j]);
+  if (showComputedCCLine) {
+    static gp2cc_ccgeo cg;
+    cg.n = n;
+    for (int i = 0; i < n; i++) {
+      cg.segAngle[i] = ov.gt.angle[i];
+      cg.cx8[i] = ov.gt.Y8[i];
+      cg.cy8[i] = ov.gt.X8[i];
+      cg.f14[i] = ov.gt.f14[i];
+    }
+    ov.numCmds = 0;
+    gp2geom::computeCcLine(cg, trackdata, GP2_MAX_TRACKDATA, ov.gt.ccoff, ov.bl, ov.a18, ov.cmdSeg, &ov.numCmds);
+    for (int i = 0; i < n; i++) {
+      double cosh = gp2geom::gv(ov.gt.angle[i]) / 16384.0;
+      double sinh = gp2geom::gv(0x4000 - ov.gt.angle[i]) / 16384.0;
+      double pvx = -sinh, pvy = cosh;
+      double px = ov.gt.X8[i] / 8.0, py = ov.gt.Y8[i] / 8.0;
+      double cc = ov.bl[i] / 8.0;
+      ov.ccx[i] = ox + (px + pvx * cc - bwx) * ES;  ov.ccy[i] = oy + (py + pvy * cc - bwy) * ES;
+    }
+    ov.hasCC = true;
   }
 
-  // --- per-sector indicators + selected-sector highlight ---
-  // each CCLineSection maps 1:1 to a cc-command (cmdSeg[c] = its first segment).
+  ov.valid = true;
+  return true;
+}
+
+// Compiled-track overlay: bit-exact road edges + a perpendicular divider at each
+// TrackSection boundary, in BLUE. Numbers / start-finish stay with the normal view.
+void GPTrack::drawCompiledTrack(Display *g)
+{
+  if (!ov.valid) return;
+  int n = ov.n;
+
+  CPen *trackPen = new CPen(PS_SOLID, 1, RGB(0, 96, 255));   // blue
+  g->SelectObject(trackPen);
+
+  for (int i = 0; i < n; i++) {                              // road edges
+    int j = (i + 1) % n;
+    g->drawLine(ov.lex[i], ov.ley[i], ov.lex[j], ov.ley[j]);
+    g->drawLine(ov.rex[i], ov.rey[i], ov.rex[j], ov.rey[j]);
+  }
+
+  // section dividers: cumulative getLength() gives each section's first segment
+  // (skip index==-99 sections that emit no geometry command, as WriteTrack does).
+  int nsec = TrackSections->size();
+  int seg = 0;
+  for (int k = 0; k < nsec; k++) {
+    TrackSection *t = (TrackSection *)TrackSections->elementAt(k);
+    if (t->index == -99) continue;
+    int s = seg;
+    seg += (int)t->getLength();
+    if (s < 0 || s >= n) continue;
+    g->drawLine(ov.lex[s], ov.ley[s], ov.rex[s], ov.rey[s]);
+  }
+
+  g->setColor(0);                                            // deselect before delete
+  delete trackPen;
+}
+
+// Compiled-cc-line overlay: bit-exact racing line + a perpendicular tick at each
+// cc-sector start, in ORANGE; the SELECTED sector over-drawn in bright YELLOW.
+// CCLineSection[c] starts at cmdSeg[c+1] -- cmdSeg[0] is the seed/start command
+// (the editor's CCLineStart header), not a user-editable sector.
+void GPTrack::drawCompiledCcLine(Display *g)
+{
+  if (!ov.valid || !ov.hasCC) return;
+  int n = ov.n;
+
+  CPen *linePen = new CPen(PS_SOLID, 1, RGB(255, 140, 0));   // orange
+  g->SelectObject(linePen);
+  for (int i = 0; i < n; i++) {
+    int j = (i + 1) % n;
+    g->drawLine(ov.ccx[i], ov.ccy[i], ov.ccx[j], ov.ccy[j]);
+  }
+  g->setColor(0);
+  delete linePen;
+
   int nSec = (CCLineSections != NULL) ? CCLineSections->size() : 0;
-  int mSec = (numCmds < nSec) ? numCmds : nSec;
-  for (int c = 0; c < mSec; c++) {
-    int s = cmdSeg[c];
+  CPen *tickPen = new CPen(PS_SOLID, 1, RGB(255, 140, 0));   // orange tick
+  CPen *selPen  = new CPen(PS_SOLID, 2, RGB(255, 255, 0));   // bright yellow (selected)
+  for (int c = 0; c < nSec; c++) {
+    int ci = c + 1;                                          // +1: skip the seed command
+    if (ci >= ov.numCmds) break;
+    int s = ov.cmdSeg[ci];
     if (s < 0 || s >= n) continue;
     CCLineSection *sec = (CCLineSection *)CCLineSections->elementAt(c);
     BOOL sel = (sec != NULL) && sec->isSelected();
 
-    // highlight the selected sector's cc-line segments (over-draw in colour 4)
-    if (sel) {
-      int len = (sec != NULL) ? (int)sec->getLength() : 0;
-      g->setColor(4);
+    if (sel) {                                               // highlight the selected sector
+      int len = (int)sec->getLength();
+      g->SelectObject(selPen);
       for (int k = 0; k < len; k++) {
         int i = (s + k) % n, j = (i + 1) % n;
-        g->drawLine(ccx[i], ccy[i], ccx[j], ccy[j]);
+        g->drawLine(ov.ccx[i], ov.ccy[i], ov.ccx[j], ov.ccy[j]);
       }
     }
 
-    // small perpendicular tick on the cc-line where the sector starts. The editor
-    // transform is uniform scale + translate (no rotation), so the world-space unit
-    // perpendicular doubles as the editor-space direction; tlen is in editor units.
-    double cosh = gp2cc_gv(gt.angle[s]) / 16384.0;
-    double sinh = gp2cc_gv(0x4000 - gt.angle[s]) / 16384.0;
-    double tlen = 3.0;   // editor units
+    double cosh = gp2geom::gv(ov.gt.angle[s]) / 16384.0;        // tick perpendicular
+    double sinh = gp2geom::gv(0x4000 - ov.gt.angle[s]) / 16384.0;
+    double tlen = 3.0;
     double tx = -sinh * tlen, ty = cosh * tlen;
-    g->setColor(sel ? 4 : BLUE_PEN);
-    g->drawLine(ccx[s] - tx, ccy[s] - ty, ccx[s] + tx, ccy[s] + ty);
+    g->SelectObject(sel ? selPen : tickPen);
+    g->drawLine(ov.ccx[s] - tx, ov.ccy[s] - ty, ov.ccx[s] + tx, ov.ccy[s] + ty);
   }
-
-  // --- track-section dividers + numbers (gated on showTrackNumbers) ---
-  // Each TrackSection serializes to ONE geometry command whose word N = getLength()
-  // (TrackSection::write writes lengthData as the command word) and gp2cc emits exactly
-  // N segments per command, so the running sum of getLength() over the sections (skipping
-  // the index==-99 ones that emit no command, as WriteTrack does) gives each section's
-  // first compiled segment — bit-exact with the road drawn above.
-  if (showTrackNumbers) {
-    int nsec = TrackSections->size();
-    CPen *divPen = new CPen(PS_SOLID, 1, RGB(110, 110, 110));   // section dividers (gray)
-    g->SelectObject(divPen);
-    int seg = 0;
-    for (int k = 0; k < nsec; k++) {
-      TrackSection *t = (TrackSection *)TrackSections->elementAt(k);
-      if (t->index == -99) continue;          // emits no geometry command (see WriteTrack)
-      int s = seg;                            // this section's first compiled segment
-      int len = (int)t->getLength();
-      seg += len;
-      if (s < 0 || s >= n) continue;
-
-      // divider: perpendicular line across the road at the section boundary
-      g->drawLine(lex[s], ley[s], rex[s], rey[s]);
-
-      // section number placed mid-section on the centre line (like the default view)
-      int mid = s + len / 2;
-      if (mid >= n) mid = s;
-      char buf[12];
-      wsprintf(buf, "%d", k);
-      g->drawText(ox + (gt.X8[mid] / 8.0 - bwx) * ES,
-                  oy + (gt.Y8[mid] / 8.0 - bwy) * ES, buf);
-    }
-    g->setColor(0);                            // deselect divPen before deleting it
-    delete divPen;
-  }
-
-  // --- start/finish line (gated on showFinishLine) ---
-  // Thick line across the road at segment 0 + checkered flag, mirroring
-  // TrackSection::drawStartingLine in the default view.
-  if (showFinishLine) {
-    CPen *sfPen = new CPen(PS_SOLID, 3, RGB(0, 0, 0));
-    g->SelectObject(sfPen);
-    g->drawLine(lex[0], ley[0], rex[0], rey[0]);
-    g->setColor(0);                            // deselect sfPen before deleting it
-    delete sfPen;
-    g->drawBitmap(IDB_CHECKED_FLAG, lex[0], ley[0] - 16);
-  }
+  g->setColor(0);                                            // deselect before delete
+  delete tickPen;
+  delete selPen;
 }
 
 void GPTrack::drawPitlane(Display *g)
