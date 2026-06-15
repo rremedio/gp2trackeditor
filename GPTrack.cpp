@@ -73,7 +73,7 @@ GPTrack::GPTrack(BOOL create)
 {
   GP2BackupNumber = 1;
   GP2MaxBackupNumber = 20;
-  memset(trackdata, 0, 65535);
+  memset(trackdata, 0, GP2_MAX_TRACKDATA);
   circuitName = CString("Unnamed Circuit");
   countryName = CString("Unknown Country");
   circuitYear = CString("1998");
@@ -742,6 +742,13 @@ void GPTrack::ReadTrackFile(CDocument *pDoc, const char *filename)
   count = GetLengthofFile(filename);
   setTrackName(filename);
 
+  if (count > GP2_MAX_TRACKDATA) {
+    AfxMessageBox("Track file too large for this editor", MB_OK);
+    valid = FALSE;
+    if (fp) fclose(fp);
+    return;
+  }
+
   if (trackdata != NULL && fp != NULL) {
     fread(trackdata, count, 1, fp);
   } else {
@@ -782,6 +789,13 @@ int GPTrack::ReadTrackInfoFile(const char *filename)
   count = GetLengthofFile(filename);
   setTrackName(filename);
 
+  if (count > GP2_MAX_TRACKDATA) {
+    AfxMessageBox("Track file too large for this editor", MB_OK);
+    valid = FALSE;
+    if (fp) fclose(fp);
+    return 0;
+  }
+
   if (trackdata != NULL && fp != NULL) {
     fread(trackdata, count, 1, fp);
   } else {
@@ -794,7 +808,7 @@ int GPTrack::ReadTrackInfoFile(const char *filename)
 
   fileLength = count;
 
-  if (fileLength < 65535) {
+  if (fileLength <= GP2_MAX_TRACKDATA) {
     ReadInfo(FALSE);
     valid = TRUE;
   } else {
@@ -4072,7 +4086,7 @@ bool GPTrack::buildCompiledOverlay()
   if (TrackSections == NULL || TrackSections->size() == 0) return false;
 
   RecreateData();                                     // live track -> trackdata[]
-  if (gp2geom::compileGeometry(trackdata, 65535, ov.gt) != 0) return false;
+  if (gp2geom::compileGeometry(trackdata, GP2_MAX_TRACKDATA, ov.gt) != 0) return false;
   int n = ov.gt.n;
   if (n <= 1) return false;
   ov.n = n;
@@ -4103,7 +4117,7 @@ bool GPTrack::buildCompiledOverlay()
       cg.f14[i] = ov.gt.f14[i];
     }
     ov.numCmds = 0;
-    gp2geom::computeCcLine(cg, trackdata, 65535, ov.gt.ccoff, ov.bl, ov.a18, ov.cmdSeg, &ov.numCmds);
+    gp2geom::computeCcLine(cg, trackdata, GP2_MAX_TRACKDATA, ov.gt.ccoff, ov.bl, ov.a18, ov.cmdSeg, &ov.numCmds);
     for (int i = 0; i < n; i++) {
       double cosh = gp2geom::gv(ov.gt.angle[i]) / 16384.0;
       double sinh = gp2geom::gv(0x4000 - ov.gt.angle[i]) / 16384.0;
