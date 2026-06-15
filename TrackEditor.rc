@@ -276,6 +276,7 @@ BEGIN
     BUTTON      ID_VIEWCAMERAS
     SEPARATOR
     BUTTON      ID_VIEW_COMPILED
+    BUTTON      ID_VIEW_COMPILED_CCLINE
 END
 
 IDR_OBJECT TOOLBAR 16, 15
@@ -474,7 +475,8 @@ BEGIN
         MENUITEM "Show Track",                  VIEW_TRACK
         MENUITEM "Show Pitlane",                VIEW_PITLANE
         MENUITEM "Show CC Line",                VIEW_CCLINE
-        MENUITEM "Show Compiled Track",         ID_VIEW_COMPILED
+        MENUITEM "Compiled Track Overlay",      ID_VIEW_COMPILED
+        MENUITEM "Compiled CC-Line Overlay",    ID_VIEW_COMPILED_CCLINE
         MENUITEM "Show Objects",                VIEW_OBJECTS
         MENUITEM "Show Fences",                 VIEW_WALLS
         MENUITEM "Show Pit Fences",             ID_SHOW_SHOWPITFENCES

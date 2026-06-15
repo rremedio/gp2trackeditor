@@ -147,6 +147,10 @@ public:
   afx_msg void
     OnViewCompiled();
   afx_msg void
+    OnUpdateViewCompiledCCLine(CCmdUI* pCmdUI);
+  afx_msg void
+    OnViewCompiledCCLine();
+  afx_msg void
     OnUpdateViewObjBitmaps(CCmdUI* pCmdUI);
   afx_msg void
     OnUpdateZoomtool(CCmdUI* pCmdUI);
