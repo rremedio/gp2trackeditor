@@ -11,8 +11,9 @@
 #include "TrackSection.h"
 #include "TrackObjectDefinition.h"
 #include "CCLineSection.h"
-#include "gp2cc.h"     // bit-exact cc-line kernel (chaotic; kept as-is)
-#include "gp2geom.hpp" // semantic C++ track-geometry compiler (drop-in for gp2cc_compile_geometry_buf)
+#include "gp2cc.h"      // shared structs + the original C kernel (kept as fallback)
+#include "gp2geom.hpp"  // semantic C++ track-geometry compiler (drop-in for gp2cc_compile_geometry_buf)
+#include "gp2ccline.hpp" // C++ cc-line solver on the formula tables (drop-in for gp2cc_compute_ccline)
 #include "TrackCmd.h"
 #include "InternalObject.h"
 #include "JamFileEditor.h"
@@ -4071,7 +4072,7 @@ void GPTrack::drawComputed(Display *g)
   }
   static int cmdSeg[GP2CC_MAXSEG];   // first segment of each cc-command (=sector)
   int numCmds = 0;
-  gp2cc_compute_ccline(&cg, trackdata, 65535, gt.ccoff, bl, a18, cmdSeg, &numCmds);
+  gp2geom::computeCcLine(cg, trackdata, 65535, gt.ccoff, bl, a18, cmdSeg, &numCmds);
 
   // editor frame: world units -> editor units = /128 (128 world-u/seg = 1 editor-u),
   // anchored at section 0's start. Edges + cc-line = centre + perpendicular(heading)*

@@ -190,6 +190,12 @@
            define GP2GEOM_EMBEDDED_COS to use the extracted table (bit-identical). -->
       <AdditionalOptions>/constexpr:steps4000000 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="gp2ccline.cpp">
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <!-- includes both formula tables (cos+atan); same constexpr budget. -->
+      <AdditionalOptions>/constexpr:steps4000000 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="GPTrackDraw.cpp" />
     <ClCompile Include="HyperLinkButton.cpp" />
     <ClCompile Include="Info.cpp" />
@@ -299,6 +305,9 @@
     <ClInclude Include="gp2geom.hpp" />
     <ClInclude Include="gp2cos.hpp" />
     <ClInclude Include="gp2cos_reference.hpp" />
+    <ClInclude Include="gp2ccline.hpp" />
+    <ClInclude Include="gp2atan.hpp" />
+    <ClInclude Include="gp2atan_reference.hpp" />
     <ClInclude Include="htmlhelp.h" />
     <ClInclude Include="ImportDataElement.h" />
     <ClInclude Include="Info.h" />
