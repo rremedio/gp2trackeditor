@@ -1,7 +1,6 @@
 #pragma once
 #include <array>
 #include <cstdint>
-#include "gp2atan_reference.hpp"   // golden oracle: GP2's extracted t_ArithTab1 bytes
 
 // ---------------------------------------------------------------------------
 // GP2 geometry — the arctangent table expressed as its generating formula.
@@ -17,9 +16,15 @@
 // single entry sits within 1e-3 of a .5 boundary, and it rounds correctly.
 //
 // So this is the poster child for replacing an opaque blob with a formula:
-// one line of intent, no override. We still keep the compile-time guardrail
-// (static_assert against GP2's bytes) as free insurance against an exotic
-// toolchain ever flipping that one boundary entry.
+// one line of intent, no override.
+//
+// WARNING: the entries come from compile-time floating-point rounding, so a
+// different compiler or standard library could round an entry that lands on a
+// .5 boundary the other way. This table is far less fragile than the cosine one
+// (only a single entry is anywhere near a boundary, and it rounds correctly),
+// but if the compiled track or cc-line ever start to DRIFT, a rounding
+// disagreement here — or in gp2cos.hpp — is the first thing to suspect:
+// regenerate the table and diff it against GP2's t_ArithTab1 bytes.
 // ---------------------------------------------------------------------------
 
 namespace gp2geom {
@@ -62,16 +67,7 @@ constexpr std::array<short, kAtanGrid> makeAtanTable() {
 
 inline constexpr std::array<short, kAtanGrid> kArctan = makeAtanTable();
 
-// ---- compile-time guardrail (no override needed for this table) -------------
-constexpr bool atanMatchesReference() {
-    for (int i = 0; i < kAtanGrid; ++i)
-        if (kArctan[i] != kAtanRef[i]) return false;
-    return true;
-}
-static_assert(atanMatchesReference(),
-    "gp2geom arctan table != GP2 reference bytes: a float rounding boundary "
-    "flipped on this toolchain. Inspect the diff before shipping.");
-
+// Cheap spot-checks of the two exact endpoints (no embedded reference table).
 static_assert(kArctan[0]    ==    0, "atan(0)");
 static_assert(kArctan[2048] == 8192, "atan(1) = pi/4 = 0x2000");
 

@@ -295,10 +295,8 @@
     <ClInclude Include="gp2cc.h" />
     <ClInclude Include="gp2geom.hpp" />
     <ClInclude Include="gp2cos.hpp" />
-    <ClInclude Include="gp2cos_reference.hpp" />
     <ClInclude Include="gp2ccline.hpp" />
     <ClInclude Include="gp2atan.hpp" />
-    <ClInclude Include="gp2atan_reference.hpp" />
     <ClInclude Include="htmlhelp.h" />
     <ClInclude Include="ImportDataElement.h" />
     <ClInclude Include="Info.h" />

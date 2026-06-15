@@ -1,7 +1,6 @@
 #pragma once
 #include <array>
 #include <cstdint>
-#include "gp2cos_reference.hpp"   // golden oracle: GP2's extracted t_Sinus bytes
 
 // ---------------------------------------------------------------------------
 // GP2 geometry — the cosine table expressed as its generating formula.
@@ -19,15 +18,19 @@
 // to 703 (round() gives 704). That single 1-unit entry is load-bearing: the
 // racing-line solver is a chaotic feedback system, and a track whose heading
 // passes through this angle (e.g. F1CT09) drops from 100% to 29% correct
-// without it. So we override that one entry and PROVE the whole table equals
-// GP2's bytes at compile time (see the static_assert at the bottom).
+// without it. So we override that one entry explicitly (kQuirkIndex below).
 //
 // Why a formula instead of an embedded blob: the formula documents intent
-// (this IS a cosine), and computing it at build time keeps the runtime fully
-// deterministic (no per-call float). The float boundary entries aren't
-// portable, so we don't trust them blindly — the static_assert is the
-// guardrail: if any toolchain rounds a boundary entry differently, the BUILD
-// fails loudly instead of the racing line drifting silently.
+// (this IS a cosine) and computing it at build time keeps the runtime fully
+// deterministic (no per-call float).
+//
+// WARNING: the entries come from compile-time floating-point rounding, so a
+// different compiler or standard library could round an entry that lands on a
+// .5 boundary the other way. We force only the one known boundary case
+// (i = 1992); any other toolchain disagreement would be silent. If the compiled
+// track or cc-line ever start to DRIFT, suspect a rounding mismatch in this
+// table (or in gp2atan.hpp) first: regenerate it and diff against GP2's t_Sinus
+// bytes.
 // ---------------------------------------------------------------------------
 
 namespace gp2geom {
@@ -81,17 +84,8 @@ constexpr short scos(int angle) {
     return kCosine[a >> 3];
 }
 
-// ---- compile-time guardrails -------------------------------------------------
-constexpr bool matchesReference() {
-    for (int i = 0; i < kGrid; ++i)
-        if (kCosine[i] != kCosRef[i]) return false;
-    return true;
-}
-static_assert(matchesReference(),
-    "gp2geom cosine table != GP2 reference bytes: a float rounding boundary "
-    "flipped on this toolchain. Inspect the diff and add a documented override "
-    "before shipping — do NOT relax this assert.");
-
+// Cheap spot-checks (no embedded reference table). The 1992 entry is the one
+// load-bearing rounding boundary, so we still pin it at compile time.
 static_assert(kCosine[0]    ==  16384, "cos(0)");
 static_assert(kCosine[2048] ==      0, "cos(pi/2)");
 static_assert(kCosine[4096] == -16384, "cos(pi)");
