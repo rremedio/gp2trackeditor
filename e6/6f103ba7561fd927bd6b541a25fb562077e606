@@ -1,0 +1,25 @@
+.gitignore
+  s_c7c96371f8e692::t_41f783727479e8 1-16
+GPTrack.cpp
+  s_c7c96371f8e692::t_d6a649f519c29c 76,745-751,792-798,811,4089,4122
+GPTrack.h
+  s_c7c96371f8e692::t_f7c0b822ab7c19 10-13,323
+build.bat.example
+  s_c7c96371f8e692::t_1e13ff6faf66d7 1-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "e66f103ba7561fd927bd6b541a25fb562077e606",
+  "prompts": {},
+  "sessions": {
+    "s_c7c96371f8e692": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b147ce8-cefa-41b3-93e2-0b95d247066c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>"
+    }
+  }
+}
