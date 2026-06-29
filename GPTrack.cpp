@@ -4089,8 +4089,10 @@ bool GPTrack::buildCompiledOverlay()
     double pvx = -sinh, pvy = cosh;                   // unit perpendicular (worldX, worldY)
     double px = ov.gt.X8[i] / 8.0, py = ov.gt.Y8[i] / 8.0;
     double wl = ov.gt.widthL[i] / 8.0, wr = ov.gt.widthR[i] / 8.0;
-    ov.lex[i] = ox + (px + pvx * wl - bwx) * ES;  ov.ley[i] = oy + (py + pvy * wl - bwy) * ES;
-    ov.rex[i] = ox + (px - pvx * wr - bwx) * ES;  ov.rey[i] = oy + (py - pvy * wr - bwy) * ES;
+    // edge sign matches the normal view's getLeftSide (a-90 => -pv) / getRightSide
+    // (a+90 => +pv); otherwise widthL/widthR render on the mirror-opposite side.
+    ov.lex[i] = ox + (px - pvx * wl - bwx) * ES;  ov.ley[i] = oy + (py - pvy * wl - bwy) * ES;
+    ov.rex[i] = ox + (px + pvx * wr - bwx) * ES;  ov.rey[i] = oy + (py + pvy * wr - bwy) * ES;
   }
 
   if (showComputedCCLine) {
